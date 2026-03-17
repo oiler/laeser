@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laeser</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="layout">
+        <aside id="sidebar">
+            {% include "_sidebar.html" %}
+        </aside>
+
+        <main id="entry-list">
+            <p class="empty-state">Select a source to browse entries.</p>
+        </main>
+
+        <article id="entry-reader">
+            <p class="empty-state">Select an entry to read.</p>
+        </article>
+    </div>
+</body>
+</html>
