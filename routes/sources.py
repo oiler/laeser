@@ -35,7 +35,7 @@ def add_source_form(request: Request):
 
 
 @router.post("/sources", response_class=HTMLResponse)
-def add_source(
+async def add_source(
     request: Request,
     feed_url: str = Form(...),
     name: str = Form(...),
@@ -43,13 +43,15 @@ def add_source(
     archive_mode: str = Form(...),
 ):
     folder_name = re.sub(r"[^\w]+", "-", name.lower()).strip("-")
-    create_source(
+    source = create_source(
         name=name,
         type=type,
         feed_url=feed_url,
         archive_mode=archive_mode,
         folder_name=folder_name,
     )
+    if type != "manual" and feed_url:
+        await run_in_threadpool(do_refresh, source["id"], source)
     return _sidebar_response(request)
 
 

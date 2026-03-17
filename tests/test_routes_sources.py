@@ -8,7 +8,8 @@ def test_homepage_renders(client):
     assert "Laeser" in resp.text
 
 
-def test_add_source_via_post(client):
+def test_add_source_via_post(client, mocker):
+    mocker.patch("routes.sources.do_refresh")
     resp = client.post("/sources", data={
         "feed_url": "https://feeds.twit.tv/sn.xml",
         "name": "Security Now",
@@ -20,7 +21,8 @@ def test_add_source_via_post(client):
     assert "Security Now" in resp.text
 
 
-def test_add_source_returns_sidebar(client):
+def test_add_source_returns_sidebar(client, mocker):
+    mocker.patch("routes.sources.do_refresh")
     resp = client.post("/sources", data={
         "feed_url": "https://example.com/feed.rss",
         "name": "My Show",
