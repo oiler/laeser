@@ -25,9 +25,10 @@ def fetch_and_parse_feed(url: str) -> list[dict]:
     """
     Fetch and parse an RSS/Atom feed URL.
     Returns a list of normalised entry dicts.
-    Raises ValueError if the feed is malformed (bozo).
+    Raises ValueError only if the feed is unrecoverably malformed (bozo with no entries).
+    Minor bozo flags (e.g. encoding declaration mismatches) are ignored when entries are present.
     """
     feed = feedparser.parse(url)
-    if feed.bozo:
+    if feed.bozo and not feed.entries:
         raise ValueError(f"Malformed feed at {url}: {feed.bozo_exception}")
     return [parse_feed_entry(e) for e in feed.entries]

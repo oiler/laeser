@@ -79,10 +79,25 @@ def test_fetch_and_parse_feed_returns_list(monkeypatch):
     assert results[0]["title"] == "Ep 1"
 
 
-def test_fetch_and_parse_feed_raises_on_bozo(monkeypatch):
+def test_fetch_and_parse_feed_raises_on_bozo_with_no_entries(monkeypatch):
     fake = MagicMock()
     fake.bozo = True
     fake.bozo_exception = Exception("malformed XML")
+    fake.entries = []
     monkeypatch.setattr("feeds.fetcher.feedparser.parse", lambda url: fake)
     with pytest.raises(ValueError, match="malformed"):
         fetch_and_parse_feed("https://example.com/bad.rss")
+
+
+def test_fetch_and_parse_feed_tolerates_bozo_with_entries(monkeypatch):
+    """Bozo flag with encoding mismatches etc. should not raise if entries were parsed."""
+    fake = MagicMock()
+    fake.bozo = True
+    fake.bozo_exception = Exception("encoding mismatch")
+    fake.entries = [MagicMock(title="Episode 1", link="https://example.com/ep1",
+                              enclosures=[], author="Host", summary="Desc",
+                              published="Mon, 01 Jan 2024 00:00:00 +0000",
+                              itunes_duration="3600")]
+    monkeypatch.setattr("feeds.fetcher.feedparser.parse", lambda url: fake)
+    result = fetch_and_parse_feed("https://example.com/feed.rss")
+    assert len(result) == 1
