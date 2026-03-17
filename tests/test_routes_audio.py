@@ -29,8 +29,7 @@ def test_audio_returns_404_for_missing_file(client_with_audio):
 
 
 def test_audio_returns_403_for_path_traversal(client_with_audio):
-    resp = client_with_audio.get("/audio/../laeser.db")
-    # URL normalization by Starlette prevents the traversal before reaching the handler.
-    # The path is normalized to /audio/laeser.db, so file_path becomes "laeser.db".
-    # This file doesn't exist, so we get 404. Either 403 or 404 is acceptable.
-    assert resp.status_code in (403, 404)
+    # Use percent-encoded slash (%2F) to bypass Starlette URL normalization.
+    # The path parameter decodes to "../laeser.db", which resolves outside the library dir.
+    resp = client_with_audio.get("/audio/..%2Flaeser.db")
+    assert resp.status_code == 403
