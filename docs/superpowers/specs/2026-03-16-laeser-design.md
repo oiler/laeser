@@ -26,7 +26,7 @@ The user opens it a few times per week to browse recent feed items and manage th
 - `track_only` — fetch and index metadata (title, author, pub date, URL, show notes) for all items over time. Never auto-downloads full content or audio.
 - `full_archive` — same as track_only, plus automatically downloads all content and audio for every entry.
 
-**Manual entry** — a URL or uploaded file added directly by the user, independent of any feed.
+**Manual entry** — a URL or uploaded file added directly by the user, independent of any feed. Manual entries belong to a single synthetic source row named "Manual Entries" (type `manual`, no feed_url), keeping `source_id` non-nullable throughout the data model.
 
 ---
 
@@ -63,7 +63,7 @@ If the database is ever lost, it can be rebuilt by scanning the `library/` folde
 | name | TEXT | Display name (e.g., "Security Now") |
 | type | TEXT | `podcast`, `rss`, or `manual` |
 | feed_url | TEXT | RSS/Atom feed URL |
-| archive_mode | TEXT | `track_only` or `full_archive` |
+| archive_mode | TEXT | `track_only` or `full_archive`. `NULL` for the synthetic "Manual Entries" source, which has no feed to archive. |
 | folder_name | TEXT | Slug used for `library/` subdirectory |
 | last_fetched_at | DATETIME | |
 | last_fetch_error | TEXT | NULL if last fetch succeeded |
@@ -83,7 +83,8 @@ If the database is ever lost, it can be rebuilt by scanning the `library/` folde
 | audio_path | TEXT | Relative path to downloaded MP3, if any |
 | file_path | TEXT | Relative path to markdown file in `library/` |
 | is_saved | BOOLEAN | Promoted to library (markdown file written) |
-| fetch_status | TEXT | `ok`, `fetch_failed`, `pending` |
+| read_at | DATETIME | NULL = unread. Set when user opens the entry in the reader panel. Used to display unread count badges and visual distinction in the entry list. |
+| fetch_status | TEXT | State machine: `pending` (set on add, before fetch attempt), `ok` (fetch succeeded), `fetch_failed` (fetch failed — entry saved with available metadata only). A future `downloading` state can be added when parallel download queuing is introduced. |
 | created_at | DATETIME | |
 
 **`tags`**
@@ -144,7 +145,7 @@ The interface has three zones:
 
 ### Left Sidebar — Source List
 - **All Items** at the top (chronological feed across all sources)
-- **Library** below it (saved/archived entries only)
+- **Library** below it (all entries where `is_saved = true`, across all sources)
 - All sources listed by name with unread count badge
 - Add source button at the bottom
 
@@ -157,7 +158,7 @@ Entries for the selected source or view, sorted by pub date (newest first). Each
 - Save/bookmark icon (toggles `is_saved`)
 - Audio indicator icon for podcast entries
 
-Unread entries are visually distinct from read ones.
+Unread entries are visually distinct from read ones. There is no "mark as unread" affordance in V1 — read state is set automatically when an entry is opened and is not manually reversible.
 
 ### Right Panel — Entry Reader
 - Full markdown content rendered as HTML (show notes / article body)
@@ -172,9 +173,9 @@ Unread entries are visually distinct from read ones.
 | Action | Description |
 |---|---|
 | Add source | Paste a feed URL, set display name, choose `track_only` or `full_archive` |
-| Manual add | Paste a URL or upload a file directly to the library |
+| Manual add | Paste a URL or upload a `.md` or `.txt` file directly to the library |
 | Refresh feed | Manually trigger a fetch for one or all sources (background, non-blocking) |
-| Save entry | Promote entry to library — writes markdown file to `library/source-folder/` |
+| Save entry | Promote entry to library — writes markdown file to `library/source-folder/`. If the file already exists (e.g. re-saving after un-saving), it is overwritten. Un-saving sets `is_saved = false` in the database but does **not** delete the markdown file — the file is a permanent archive and removal is a deliberate manual action in Finder. |
 | Tag entry | Assign one or more tags to a saved entry |
 | Download audio | On-demand MP3 download for any podcast entry, even on `track_only` feeds |
 | Search | Keyword search across title, author, description; filter by one or more sources |
@@ -183,7 +184,8 @@ Unread entries are visually distinct from read ones.
 
 ## Search
 
-- Keyword search across `title`, `author`, and `description` fields in SQLite
+- Keyword search across `title`, `author`, and `description` fields in SQLite (V1)
+- Raw body content is **not** stored in SQLite — for deep within-source search, use macOS Finder/Spotlight or grep directly on the `library/` markdown files
 - Multi-select filter by source name
 - Results shown in the center panel, replacing the current entry list
 - Implemented via HTMX — search input triggers a background query as the user types (debounced)
@@ -194,7 +196,7 @@ Unread entries are visually distinct from read ones.
 
 - Polls RSS/Atom feeds using `feedparser` (Python library)
 - Deduplication by URL — fetching a feed twice never creates duplicate entries
-- For `full_archive` sources: fetches all historical entries on first add, then incrementally on refresh
+- For `full_archive` sources: fetches all entries currently exposed by the feed on first add (regardless of when the user subscribes), then incrementally on each refresh. If the feed XML only exposes recent items (e.g. last 20), only those are retrievable via RSS — deeper back-catalogs require a source-specific import script. The existing Security Now scripts (`example-files/security-now/`) are the reference pattern for this.
 - Show notes extracted from `<description>` or `<content:encoded>` fields in the RSS XML
 - Audio enclosures extracted from `<enclosure>` tags for podcast feeds
 - Rate limiting on bulk downloads (polite delays between requests), consistent with existing Security Now scripts
@@ -207,6 +209,7 @@ Unread entries are visually distinct from read ones.
 |---|---|
 | Feed fetch fails | Logged, source marked with `last_fetch_error`. UI shows warning indicator on source. Other feeds unaffected. |
 | Partial audio download | Resumable via HTTP range requests. Checks for existing partial file before starting. |
+| Audio download fails (404, timeout, no bytes received) | Logged, `fetch_status` set to `fetch_failed`, any partial file cleaned up. |
 | Duplicate entry | Silently skipped — deduplicated by URL. |
 | Malformed RSS item | Bad item skipped and logged. Valid items in the same feed still processed. |
 | Manual URL fetch fails | Entry saved with available metadata, `fetch_status` set to `fetch_failed`. |
@@ -225,8 +228,9 @@ No automated UI tests. The frontend is simple enough to verify manually.
 
 ## Future Enhancements (Out of Scope for V1)
 
-- **HTML-to-markdown processor** — fetch full article text from a URL and convert to markdown for manually added entries
-- **Full transcript download** — for shows like Security Now that publish text transcripts
-- **AI-powered search / summarisation** — query the library using natural language
+- **LLM enrichment** — on save, run each entry through an LLM to generate: a 2-3 sentence summary, a topic taxonomy, and key entities (people, companies, technologies). Store in SQLite as enriched metadata. Search targets this enriched data rather than raw body content — smarter than keyword search without duplicating file content. Enabled by default with a global toggle and a per-source override for high-volume or ephemeral feeds where enrichment isn't useful.
+- **HTML-to-markdown processor** — fetch full article text from a URL and convert to markdown for manually added entries. Pairs with the LLM enrichment pipeline.
+- **Full transcript download** — for shows like Security Now that publish text transcripts alongside episodes
+- **Source-specific import scripts** — for shows with predictable URL patterns (e.g. Security Now), scripts that bypass RSS feed limits to download the full back-catalog. The existing Security Now scripts are the reference implementation.
 - **OPML import** — bulk-import existing feed subscriptions
 - **Mobile-friendly layout** — responsive CSS for phone browsing
