@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -15,19 +17,19 @@ templates = Jinja2Templates(directory="templates")
 def _sidebar_response(request: Request) -> HTMLResponse:
     sources = list_sources_with_unread_count()
     return templates.TemplateResponse(
-        "_sidebar.html", {"request": request, "sources": sources}
+        request, "_sidebar.html", {"sources": sources}
     )
 
 
 @router.get("/", response_class=HTMLResponse)
 def index(request: Request):
     sources = list_sources_with_unread_count()
-    return templates.TemplateResponse("base.html", {"request": request, "sources": sources})
+    return templates.TemplateResponse(request, "base.html", {"sources": sources})
 
 
 @router.get("/sources/add-form", response_class=HTMLResponse)
 def add_source_form(request: Request):
-    return templates.TemplateResponse("_add_source_form.html", {"request": request})
+    return templates.TemplateResponse(request, "_add_source_form.html", {})
 
 
 @router.post("/sources", response_class=HTMLResponse)
@@ -38,7 +40,6 @@ def add_source(
     type: str = Form(...),
     archive_mode: str = Form(...),
 ):
-    import re
     folder_name = re.sub(r"[^\w]+", "-", name.lower()).strip("-")
     create_source(
         name=name,
