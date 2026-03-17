@@ -1,0 +1,36 @@
+<nav>
+    <ul class="nav-views">
+        <li>
+            <a hx-get="/entries" hx-target="#entry-list" hx-push-url="false">
+                All Items
+            </a>
+        </li>
+        <li>
+            <a hx-get="/entries?saved=1" hx-target="#entry-list" hx-push-url="false">
+                Library
+            </a>
+        </li>
+    </ul>
+    <hr class="sidebar-divider">
+    <ul class="source-list">
+        {% for source in sources %}
+        {% if source.type != 'manual' %}
+        <li>
+            <a hx-get="/entries?source_id={{ source.id }}" hx-target="#entry-list" hx-push-url="false">
+                {{ source.name }}
+                {% if source.unread_count %}
+                <span class="badge">{{ source.unread_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    <hr class="sidebar-divider">
+    <button class="btn-add-source"
+            hx-get="/sources/add-form"
+            hx-target="#entry-list"
+            hx-swap="innerHTML">
+        + Add Source
+    </button>
+</nav>

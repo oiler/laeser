@@ -1,0 +1,35 @@
+<div style="padding: 20px;">
+    <h2 style="margin-bottom: 16px;">Add Source</h2>
+    <form hx-post="/sources"
+          hx-target="#sidebar"
+          hx-swap="outerHTML"
+          style="display: flex; flex-direction: column; gap: 12px;">
+        <label>
+            Feed URL<br>
+            <input type="url" name="feed_url" placeholder="https://example.com/feed.rss"
+                   required style="width: 100%; padding: 6px; margin-top: 4px;">
+        </label>
+        <label>
+            Display Name<br>
+            <input type="text" name="name" placeholder="Security Now"
+                   required style="width: 100%; padding: 6px; margin-top: 4px;">
+        </label>
+        <label>
+            Type<br>
+            <select name="type" style="width: 100%; padding: 6px; margin-top: 4px;">
+                <option value="podcast">Podcast</option>
+                <option value="rss">RSS / Article Feed</option>
+            </select>
+        </label>
+        <label>
+            Archive Mode<br>
+            <select name="archive_mode" style="width: 100%; padding: 6px; margin-top: 4px;">
+                <option value="track_only">Track Only (index metadata)</option>
+                <option value="full_archive">Full Archive (download all)</option>
+            </select>
+        </label>
+        <button type="submit" style="padding: 8px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Add Source
+        </button>
+    </form>
+</div>
