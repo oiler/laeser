@@ -46,3 +46,33 @@ def test_entry_reader_marks_as_read(client, entry):
     assert db_get_entry(entry["id"])["read_at"] is None
     client.get(f"/entries/{entry['id']}")
     assert db_get_entry(entry["id"])["read_at"] is not None
+
+
+def test_save_entry(client, entry):
+    resp = client.post(f"/entries/{entry['id']}/save")
+    assert resp.status_code == 200
+    assert "★" in resp.text  # saved star shown
+    from db.entries import get_entry as db_get
+    assert db_get(entry["id"])["is_saved"] == 1
+
+
+def test_unsave_entry(client, entry):
+    client.post(f"/entries/{entry['id']}/save")
+    resp = client.post(f"/entries/{entry['id']}/unsave")
+    assert resp.status_code == 200
+    assert "☆" in resp.text
+
+
+def test_add_tag_to_entry(client, entry):
+    resp = client.post(f"/entries/{entry['id']}/tags", data={"tag_name": "security"})
+    assert resp.status_code == 200
+    assert "security" in resp.text
+
+
+def test_remove_tag_from_entry(client, entry):
+    from db.tags import create_tag, add_tag_to_entry
+    tag = create_tag("networking")
+    add_tag_to_entry(entry["id"], tag["id"])
+    resp = client.delete(f"/entries/{entry['id']}/tags/{tag['id']}")
+    assert resp.status_code == 200
+    assert "networking" not in resp.text

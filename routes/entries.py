@@ -45,3 +45,56 @@ def entry_reader(request: Request, entry_id: int):
     return templates.TemplateResponse(
         request, "_entry_reader.html", {"entry": entry, "tags": tags}
     )
+
+
+def _tags_response(request: Request, entry_id: int) -> HTMLResponse:
+    entry = get_entry(entry_id)
+    tags = get_entry_tags(entry_id)
+    return templates.TemplateResponse(
+        request, "_entry_tags.html", {"entry": entry, "tags": tags}
+    )
+
+
+def _save_button_response(request: Request, entry_id: int) -> HTMLResponse:
+    entry = get_entry(entry_id)
+    return templates.TemplateResponse(
+        request, "_save_button.html", {"entry": entry}
+    )
+
+
+@router.post("/entries/{entry_id}/save", response_class=HTMLResponse)
+def save_entry_route(request: Request, entry_id: int):
+    entry = get_entry(entry_id)
+    if entry and not entry["is_saved"]:
+        path = write_entry_file({
+            "title": entry["title"],
+            "source_name": entry["source_name"],
+            "source_folder": entry["source_folder"],
+            "author": entry.get("author") or "",
+            "pub_date": entry.get("pub_date") or "",
+            "url": entry.get("url") or "",
+            "audio_path": entry.get("audio_path") or "",
+            "description": entry.get("description") or "",
+            "tags": [t["name"] for t in get_entry_tags(entry_id)],
+        })
+        save_entry(entry_id, file_path=str(path))
+    return _save_button_response(request, entry_id)
+
+
+@router.post("/entries/{entry_id}/unsave", response_class=HTMLResponse)
+def unsave_entry_route(request: Request, entry_id: int):
+    unsave_entry(entry_id)
+    return _save_button_response(request, entry_id)
+
+
+@router.post("/entries/{entry_id}/tags", response_class=HTMLResponse)
+def add_tag(request: Request, entry_id: int, tag_name: str = Form(...)):
+    tag = create_tag(tag_name.strip().lower())
+    add_tag_to_entry(entry_id, tag["id"])
+    return _tags_response(request, entry_id)
+
+
+@router.delete("/entries/{entry_id}/tags/{tag_id}", response_class=HTMLResponse)
+def remove_tag(request: Request, entry_id: int, tag_id: int):
+    remove_tag_from_entry(entry_id, tag_id)
+    return _tags_response(request, entry_id)

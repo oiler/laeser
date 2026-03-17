@@ -1,0 +1,18 @@
+<div class="entry-tags" id="entry-tags-{{ entry.id }}">
+    <strong>Tags:</strong>
+    {% for tag in tags %}
+    <span class="tag">
+        {{ tag.name }}
+        <button hx-delete="/entries/{{ entry.id }}/tags/{{ tag.id }}"
+                hx-target="#entry-tags-{{ entry.id }}"
+                hx-swap="outerHTML">×</button>
+    </span>
+    {% endfor %}
+    <input type="text"
+           placeholder="Add tag…"
+           name="tag_name"
+           hx-post="/entries/{{ entry.id }}/tags"
+           hx-target="#entry-tags-{{ entry.id }}"
+           hx-swap="outerHTML"
+           hx-trigger="keydown[key=='Enter']">
+</div>
