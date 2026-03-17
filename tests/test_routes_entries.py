@@ -32,3 +32,17 @@ def test_entry_list_library_view(client, entry):
     # Before saving — should not appear in library
     resp = client.get("/entries?saved=1")
     assert "Ep 1047" not in resp.text
+
+
+def test_entry_reader_renders(client, entry):
+    resp = client.get(f"/entries/{entry['id']}")
+    assert resp.status_code == 200
+    assert "Ep 1047" in resp.text
+    assert "Show notes." in resp.text
+
+
+def test_entry_reader_marks_as_read(client, entry):
+    from db.entries import get_entry as db_get_entry
+    assert db_get_entry(entry["id"])["read_at"] is None
+    client.get(f"/entries/{entry['id']}")
+    assert db_get_entry(entry["id"])["read_at"] is not None

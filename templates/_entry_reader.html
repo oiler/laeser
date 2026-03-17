@@ -1,0 +1,54 @@
+<div class="reader-content">
+    <header class="entry-header">
+        <h1>{{ entry.title }}</h1>
+        <div class="entry-meta">
+            <span>{{ entry.source_name }}</span>
+            {% if entry.author %} · <span>{{ entry.author }}</span>{% endif %}
+            {% if entry.pub_date %} · <span>{{ entry.pub_date[:10] }}</span>{% endif %}
+        </div>
+        {% if entry.url %}
+        <a href="{{ entry.url }}" target="_blank" class="original-link">View original ↗</a>
+        {% endif %}
+    </header>
+
+    <div class="entry-tags" id="entry-tags-{{ entry.id }}">
+        <strong>Tags:</strong>
+        {% for tag in tags %}
+        <span class="tag">
+            {{ tag.name }}
+            <button hx-delete="/entries/{{ entry.id }}/tags/{{ tag.id }}"
+                    hx-target="#entry-tags-{{ entry.id }}"
+                    hx-swap="outerHTML">×</button>
+        </span>
+        {% endfor %}
+        <input type="text"
+               placeholder="Add tag…"
+               name="tag_name"
+               hx-post="/entries/{{ entry.id }}/tags"
+               hx-target="#entry-tags-{{ entry.id }}"
+               hx-swap="outerHTML"
+               hx-trigger="keydown[key=='Enter']">
+    </div>
+
+    <div class="entry-body">{{ entry.description or "No content available." }}</div>
+
+    {% if entry.audio_path %}
+    <div class="audio-player">
+        <audio id="audio-player" controls>
+            <source src="/audio/{{ entry.audio_path }}" type="audio/mpeg">
+        </audio>
+        <div class="audio-controls">
+            <button onclick="setSpeed(1)" id="speed-1x" class="active">1×</button>
+            <button onclick="setSpeed(1.5)" id="speed-1-5x">1.5×</button>
+            <button onclick="setSpeed(2)" id="speed-2x">2×</button>
+        </div>
+        <script>
+          function setSpeed(rate) {
+            document.getElementById('audio-player').playbackRate = rate;
+            ['speed-1x','speed-1-5x','speed-2x'].forEach(id => document.getElementById(id).classList.remove('active'));
+            document.getElementById('speed-' + rate.toString().replace('.', '-') + 'x').classList.add('active');
+          }
+        </script>
+    </div>
+    {% endif %}
+</div>

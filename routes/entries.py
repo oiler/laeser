@@ -33,3 +33,15 @@ def entry_list(
     return templates.TemplateResponse(
         request, "_entry_list.html", {"entries": entries, "source_id": source_id}
     )
+
+
+@router.get("/entries/{entry_id}", response_class=HTMLResponse)
+def entry_reader(request: Request, entry_id: int):
+    entry = get_entry(entry_id)
+    if not entry:
+        return HTMLResponse("Entry not found", status_code=404)
+    mark_read(entry_id)
+    tags = get_entry_tags(entry_id)
+    return templates.TemplateResponse(
+        request, "_entry_reader.html", {"entry": entry, "tags": tags}
+    )
