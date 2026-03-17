@@ -1,18 +1,16 @@
-<div class="search-bar">
-    <input type="text"
-           name="q"
-           value="{{ query }}"
-           placeholder="Search entries..."
-           hx-get="/search"
-           hx-target="#entry-list"
-           hx-trigger="input changed delay:300ms"
-           hx-include="[name='source_id']">
+<form class="search-bar"
+      hx-get="/search"
+      hx-target="#entry-list"
+      hx-push-url="false">
     <input type="hidden" name="source_id" value="{{ source_id or '' }}">
-    <button hx-get="/entries{% if source_id %}?source_id={{ source_id }}{% endif %}"
+    <input type="text" name="q" value="{{ query }}" placeholder="Search entries..." autocomplete="off">
+    <button type="submit">Search</button>
+    <button type="button"
+            hx-get="/entries{% if source_id %}?source_id={{ source_id }}{% endif %}"
             hx-target="#entry-list"
             hx-push-url="false"
             title="Clear search">✕</button>
-</div>
+</form>
 
 {% if entries %}
 <ul class="entry-list">
