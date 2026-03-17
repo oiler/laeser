@@ -1,33 +1,7 @@
-# Virtual environment
-.venv/
-
-# Database
-laeser.db
-
-# Library (local content archive — not tracked in git)
-library/
-
-# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 .pytest_cache/
+laeser.db
+library/
 *.egg-info/
-dist/
-build/
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Env files
-.env
-.env.*
+.venv/
