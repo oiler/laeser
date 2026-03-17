@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 # BackgroundScheduler (thread-based) is correct here: refresh_source() is sync blocking I/O.
@@ -6,7 +7,7 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db.entries import create_entry, update_entry_fetch_status
+from db.entries import create_entry, update_entry_audio_path, update_entry_fetch_status
 from db.sources import list_sources, update_source_fetch_status
 from feeds.downloader import download_file
 from feeds.fetcher import fetch_and_parse_feed
@@ -46,9 +47,6 @@ def refresh_source(source_id: int, source: dict) -> None:
 
 def _download_audio(entry: dict, url: str, folder_name: str) -> None:
     """Download audio for an entry if not already present."""
-    from db.entries import update_entry_audio_path
-    import os
-
     library = Path(os.environ.get("LAESER_LIBRARY_PATH", "library"))
     ext = url.split(".")[-1].split("?")[0] or "mp3"
     filename = f"{entry['pub_date'][:10] if entry.get('pub_date') else 'unknown'}-{entry['id']}.{ext}"
