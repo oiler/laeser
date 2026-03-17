@@ -12,6 +12,7 @@ dependencies = [
     "apscheduler>=3.10.0",
     "requests>=2.31.0",
     "python-frontmatter>=1.1.0",
+    "nh3>=0.3.3",
 ]
 
 [tool.uv]

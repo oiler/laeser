@@ -4,7 +4,7 @@
         <div class="entry-meta">
             <span>{{ entry.source_name }}</span>
             {% if entry.author %} · <span>{{ entry.author }}</span>{% endif %}
-            {% if entry.pub_date %} · <span>{{ entry.pub_date[:10] }}</span>{% endif %}
+            {% if entry.pub_date %} · <span>{{ entry.pub_date }}</span>{% endif %}
         </div>
         {% if entry.url %}
         <a href="{{ entry.url }}" target="_blank" class="original-link">View original ↗</a>
@@ -30,7 +30,9 @@
                hx-trigger="keydown[key=='Enter']">
     </div>
 
-    <div class="entry-body">{{ entry.description or "No content available." }}</div>
+    <div class="entry-body">
+        {% if description %}{{ description | safe }}{% else %}<p class="empty-state">No content available.</p>{% endif %}
+    </div>
 
     {% if entry.audio_path %}
     <div class="audio-player">

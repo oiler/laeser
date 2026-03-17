@@ -1,5 +1,6 @@
 from typing import Optional
 
+import nh3
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -43,8 +44,9 @@ def entry_reader(request: Request, entry_id: int):
         return HTMLResponse("Entry not found", status_code=404)
     mark_read(entry_id)
     tags = get_entry_tags(entry_id)
+    safe_description = nh3.clean(entry["description"] or "") or None
     return templates.TemplateResponse(
-        request, "_entry_reader.html", {"entry": entry, "tags": tags}
+        request, "_entry_reader.html", {"entry": entry, "tags": tags, "description": safe_description}
     )
 
 
