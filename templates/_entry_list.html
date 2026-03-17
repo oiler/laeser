@@ -1,0 +1,36 @@
+<div class="search-bar">
+    <input type="text"
+           name="q"
+           placeholder="Search entries..."
+           hx-get="/search"
+           hx-target="#entry-list"
+           hx-trigger="input changed delay:300ms"
+           hx-include="[name='source_id']">
+    <input type="hidden" name="source_id" value="{{ source_id or '' }}">
+</div>
+
+{% if entries %}
+<ul class="entry-list">
+    {% for entry in entries %}
+    <li class="entry-row {% if not entry.read_at %}unread{% endif %}"
+        hx-get="/entries/{{ entry.id }}"
+        hx-target="#entry-reader"
+        hx-push-url="false">
+        <div class="entry-meta">
+            <span class="entry-title">{{ entry.title }}</span>
+            {% if entry.audio_path %}
+            <span class="icon-podcast" title="Podcast episode">🎙</span>
+            {% endif %}
+        </div>
+        <div class="entry-details">
+            <span>{{ entry.source_name }}</span>
+            {% if entry.author %} · <span>{{ entry.author }}</span>{% endif %}
+            {% if entry.pub_date %} · <span>{{ entry.pub_date[:10] }}</span>{% endif %}
+        </div>
+        {% include "_save_button.html" %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="empty-state">No entries found.</p>
+{% endif %}

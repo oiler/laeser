@@ -1,0 +1,8 @@
+<button class="save-btn {% if entry.is_saved %}saved{% endif %}"
+        hx-post="/entries/{{ entry.id }}/{% if entry.is_saved %}unsave{% else %}save{% endif %}"
+        hx-target="this"
+        hx-swap="outerHTML"
+        onclick="event.stopPropagation()"
+        title="{% if entry.is_saved %}Remove from library{% else %}Save to library{% endif %}">
+    {% if entry.is_saved %}★{% else %}☆{% endif %}
+</button>

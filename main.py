@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from db.schema import init_db
 from routes.sources import router as sources_router
+from routes.entries import router as entries_router
 
 
 @asynccontextmanager
@@ -19,3 +20,4 @@ app = FastAPI(title="Laeser", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(sources_router)
+app.include_router(entries_router)
