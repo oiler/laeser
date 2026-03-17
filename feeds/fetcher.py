@@ -1,3 +1,4 @@
+import time
 import feedparser
 from typing import Optional
 
@@ -10,12 +11,17 @@ def parse_feed_entry(entry) -> dict:
             enclosure_url = getattr(enc, "href", None)
             break
 
+    pub_date = None
+    parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
+    if parsed:
+        pub_date = time.strftime("%Y-%m-%d", parsed)
+
     return {
         "title": getattr(entry, "title", "") or "",
         "url": getattr(entry, "link", None),
         "author": getattr(entry, "author", None),
         "description": getattr(entry, "summary", None) or getattr(entry, "description", None),
-        "pub_date": getattr(entry, "published", None),
+        "pub_date": pub_date,
         "duration": getattr(entry, "itunes_duration", None),
         "enclosure_url": enclosure_url,
     }

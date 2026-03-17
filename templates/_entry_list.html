@@ -39,7 +39,7 @@
         <td class="col-source">
             {{ entry.source_name }}{% if entry.author %} · {{ entry.author }}{% endif %}
         </td>
-        <td class="col-date">{% if entry.pub_date %}{{ entry.pub_date[:10] }}{% endif %}</td>
+        <td class="col-date">{{ entry.pub_date or "" }}</td>
     </tr>
     {% endfor %}
     </tbody>

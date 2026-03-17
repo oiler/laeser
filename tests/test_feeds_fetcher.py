@@ -1,6 +1,9 @@
+import time
 import pytest
 from unittest.mock import patch, MagicMock
 from feeds.fetcher import fetch_and_parse_feed, parse_feed_entry
+
+_PARSED_DATE = time.strptime("2024-04-02", "%Y-%m-%d")
 
 
 # Minimal feedparser-like result structure
@@ -16,25 +19,17 @@ def _fake_entry(
     link="https://example.com/ep1",
     summary="Show notes here",
     author="Steve Gibson",
-    published="Tue, 02 Apr 2024 00:00:00 +0000",
+    published_parsed=_PARSED_DATE,
     enclosures=None,
     itunes_duration=None,
 ):
     e = MagicMock()
-    e.get = lambda key, default=None: {
-        "title": title,
-        "link": link,
-        "summary": summary,
-        "author": author,
-        "published": published,
-        "itunes_duration": itunes_duration,
-    }.get(key, default)
     e.title = title
     e.link = link
-    e.get("summary", "")
     e.summary = summary
     e.author = author
-    e.published = published
+    e.published_parsed = published_parsed
+    e.updated_parsed = None
     e.enclosures = enclosures or []
     e.itunes_duration = itunes_duration
     return e
@@ -47,6 +42,13 @@ def test_parse_feed_entry_extracts_fields():
     assert result["url"] == "https://example.com/ep1"
     assert result["description"] == "Show notes here"
     assert result["author"] == "Steve Gibson"
+    assert result["pub_date"] == "2024-04-02"
+
+
+def test_parse_feed_entry_pub_date_none_when_unparseable():
+    entry = _fake_entry(published_parsed=None)
+    result = parse_feed_entry(entry)
+    assert result["pub_date"] is None
 
 
 def test_parse_feed_entry_extracts_audio_enclosure():
@@ -94,10 +96,7 @@ def test_fetch_and_parse_feed_tolerates_bozo_with_entries(monkeypatch):
     fake = MagicMock()
     fake.bozo = True
     fake.bozo_exception = Exception("encoding mismatch")
-    fake.entries = [MagicMock(title="Episode 1", link="https://example.com/ep1",
-                              enclosures=[], author="Host", summary="Desc",
-                              published="Mon, 01 Jan 2024 00:00:00 +0000",
-                              itunes_duration="3600")]
+    fake.entries = [_fake_entry(title="Episode 1", link="https://example.com/ep1")]
     monkeypatch.setattr("feeds.fetcher.feedparser.parse", lambda url: fake)
     result = fetch_and_parse_feed("https://example.com/feed.rss")
     assert len(result) == 1
