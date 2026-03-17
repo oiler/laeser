@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Laeser", lifespan=lifespan)
 
-# static/ is created in Task 1 (static/.gitkeep) — always present
+Path("static").mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(sources_router)
