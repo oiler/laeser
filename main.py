@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from db.schema import init_db
+from feeds.scheduler import setup_scheduler, shutdown_scheduler
 from routes.sources import router as sources_router
 from routes.entries import router as entries_router
 from routes.search import router as search_router
@@ -13,7 +14,9 @@ from routes.audio import router as audio_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    setup_scheduler(app)
     yield
+    shutdown_scheduler()
 
 
 app = FastAPI(title="Laeser", lifespan=lifespan)

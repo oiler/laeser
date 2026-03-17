@@ -3,12 +3,14 @@ import re
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from starlette.concurrency import run_in_threadpool
 
 from db.sources import (
     create_source,
     delete_source,
     list_sources_with_unread_count,
 )
+from feeds.scheduler import refresh_source as do_refresh
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -54,4 +56,15 @@ def add_source(
 @router.delete("/sources/{source_id}", response_class=HTMLResponse)
 def remove_source(request: Request, source_id: int):
     delete_source(source_id)
+    return _sidebar_response(request)
+
+
+@router.post("/sources/{source_id}/refresh", response_class=HTMLResponse)
+async def refresh_source_route(request: Request, source_id: int):
+    # run_in_threadpool offloads the sync blocking refresh_source() to a thread,
+    # keeping the FastAPI event loop free during the feed fetch.
+    from db.sources import get_source
+    source = get_source(source_id)
+    if source:
+        await run_in_threadpool(do_refresh, source_id, source)
     return _sidebar_response(request)
