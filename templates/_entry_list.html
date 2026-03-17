@@ -16,12 +16,11 @@
         <tr>
             <th class="col-save"></th>
             <th class="col-title">Title</th>
-            <th class="col-source">Source</th>
+            {% if not source_id %}<th class="col-source">Source</th>{% endif %}
             <th class="col-date">
                 <a hx-get="/entries?{% if source_id %}source_id={{ source_id }}&{% endif %}sort={{ next_sort }}"
                    hx-target="#entry-list"
-                   hx-push-url="false"
-                   style="cursor:pointer;">Date {{ sort_icon }}</a>
+                   hx-push-url="false">Date {{ sort_icon }}</a>
             </th>
         </tr>
     </thead>
@@ -36,9 +35,7 @@
             {{ entry.title }}
             {% if entry.audio_path %}<span class="icon-podcast" title="Podcast episode">🎙</span>{% endif %}
         </td>
-        <td class="col-source">
-            {{ entry.source_name }}{% if entry.author %} · {{ entry.author }}{% endif %}
-        </td>
+        {% if not source_id %}<td class="col-source">{{ entry.source_name }}</td>{% endif %}
         <td class="col-date">{{ entry.pub_date or "" }}</td>
     </tr>
     {% endfor %}
