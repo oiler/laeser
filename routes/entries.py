@@ -28,10 +28,11 @@ def entry_list(
     request: Request,
     source_id: Optional[int] = None,
     saved: bool = False,
+    sort: str = "desc",
 ):
-    entries = list_entries(source_id=source_id, saved_only=saved)
+    entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
-        request, "_entry_list.html", {"entries": entries, "source_id": source_id}
+        request, "_entry_list.html", {"entries": entries, "source_id": source_id, "sort": sort}
     )
 
 

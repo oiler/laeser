@@ -47,7 +47,8 @@ def get_entry(entry_id: int) -> Optional[dict]:
         return _row(row) if row else None
 
 
-def list_entries(source_id: Optional[int] = None, saved_only: bool = False) -> list[dict]:
+def list_entries(source_id: Optional[int] = None, saved_only: bool = False, sort: str = "desc") -> list[dict]:
+    direction = "ASC" if sort == "asc" else "DESC"
     sql = _SELECT + "WHERE 1=1"
     params: list = []
     if source_id is not None:
@@ -55,7 +56,7 @@ def list_entries(source_id: Optional[int] = None, saved_only: bool = False) -> l
         params.append(source_id)
     if saved_only:
         sql += " AND e.is_saved = 1"
-    sql += " ORDER BY e.pub_date DESC, e.created_at DESC"
+    sql += f" ORDER BY e.pub_date {direction}, e.created_at {direction}"
     with get_db() as conn:
         return [_row(r) for r in conn.execute(sql, params).fetchall()]
 
