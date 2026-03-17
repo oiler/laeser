@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from db.schema import init_db
 from routes.sources import router as sources_router
 from routes.entries import router as entries_router
+from routes.search import router as search_router
 
 
 @asynccontextmanager
@@ -21,3 +22,4 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(sources_router)
 app.include_router(entries_router)
+app.include_router(search_router)

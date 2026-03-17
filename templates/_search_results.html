@@ -1,0 +1,25 @@
+{% if entries %}
+<ul class="entry-list">
+    {% for entry in entries %}
+    <li class="entry-row {% if not entry.read_at %}unread{% endif %}"
+        hx-get="/entries/{{ entry.id }}"
+        hx-target="#entry-reader"
+        hx-push-url="false">
+        <div class="entry-meta">
+            <span class="entry-title">{{ entry.title }}</span>
+            {% if entry.audio_path %}
+            <span class="icon-podcast" title="Podcast episode">🎙</span>
+            {% endif %}
+        </div>
+        <div class="entry-details">
+            <span>{{ entry.source_name }}</span>
+            {% if entry.author %} · <span>{{ entry.author }}</span>{% endif %}
+            {% if entry.pub_date %} · <span>{{ entry.pub_date[:10] }}</span>{% endif %}
+        </div>
+        {% include "_save_button.html" %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="empty-state">No entries found{% if query %} for "{{ query }}"{% endif %}.</p>
+{% endif %}
