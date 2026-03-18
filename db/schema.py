@@ -55,4 +55,5 @@ def init_db() -> None:
         # Migration: add guid column to existing databases
         cols = {row[1] for row in conn.execute("PRAGMA table_info(entries)")}
         if "guid" not in cols:
-            conn.execute("ALTER TABLE entries ADD COLUMN guid TEXT UNIQUE")
+            conn.execute("ALTER TABLE entries ADD COLUMN guid TEXT")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_entries_guid ON entries(guid) WHERE guid IS NOT NULL")
