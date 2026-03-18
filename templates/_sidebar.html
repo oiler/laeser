@@ -22,10 +22,16 @@
                 <span class="badge">{{ source.unread_count }}</span>
                 {% endif %}
             </a>
-            <button hx-post="/sources/{{ source.id }}/refresh"
-                    hx-target="#sidebar"
-                    hx-swap="outerHTML"
-                    title="Refresh">↻</button>
+            <span class="source-actions">
+                <button hx-post="/sources/{{ source.id }}/refresh"
+                        hx-target="#sidebar"
+                        hx-swap="innerHTML"
+                        title="Refresh">↻</button>
+                <button hx-get="/sources/{{ source.id }}/settings"
+                        hx-target="#entry-list"
+                        hx-push-url="false"
+                        title="Settings">⚙</button>
+            </span>
         </li>
         {% endif %}
         {% endfor %}

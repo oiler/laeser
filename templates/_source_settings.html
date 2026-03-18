@@ -1,0 +1,39 @@
+<div class="source-settings">
+    <h2>{{ source.name }}</h2>
+
+    <dl class="source-details">
+        <dt>Feed URL</dt>
+        <dd><a href="{{ source.feed_url }}" target="_blank">{{ source.feed_url }}</a></dd>
+        <dt>Type</dt>
+        <dd>{{ source.type }}</dd>
+        <dt>Archive Mode</dt>
+        <dd>{{ source.archive_mode }}</dd>
+        {% if source.last_fetched_at %}
+        <dt>Last Fetched</dt>
+        <dd>{{ source.last_fetched_at[:10] }}</dd>
+        {% endif %}
+        {% if source.last_fetch_error %}
+        <dt>Last Error</dt>
+        <dd class="fetch-error">{{ source.last_fetch_error }}</dd>
+        {% endif %}
+    </dl>
+
+    <div class="danger-zone">
+        <h3>Remove Source</h3>
+        <p>Removes this source and all its indexed entries. Saved markdown files in your library folder are not deleted.</p>
+        <label class="confirm-label">
+            <input type="checkbox" id="confirm-{{ source.id }}"
+                   onchange="document.getElementById('btn-remove-{{ source.id }}').disabled = !this.checked">
+            I understand this will remove <strong>{{ source.name }}</strong> and all its entries
+        </label>
+        <button id="btn-remove-{{ source.id }}"
+                disabled
+                hx-delete="/sources/{{ source.id }}"
+                hx-target="#sidebar"
+                hx-swap="innerHTML"
+                hx-on::after-request="document.getElementById('entry-list').innerHTML = '<p class=\'empty-state\'>Select a source to browse entries.</p>'"
+                class="btn-danger">
+            Remove Source
+        </button>
+    </div>
+</div>

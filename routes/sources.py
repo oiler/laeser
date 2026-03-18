@@ -8,6 +8,7 @@ from starlette.concurrency import run_in_threadpool
 from db.sources import (
     create_source,
     delete_source,
+    get_source,
     list_sources_with_unread_count,
 )
 from feeds.scheduler import refresh_source as do_refresh
@@ -53,6 +54,14 @@ async def add_source(
     if type != "manual" and feed_url:
         await run_in_threadpool(do_refresh, source["id"], source)
     return _sidebar_response(request)
+
+
+@router.get("/sources/{source_id}/settings", response_class=HTMLResponse)
+def source_settings(request: Request, source_id: int):
+    source = get_source(source_id)
+    if not source:
+        return HTMLResponse("Source not found", status_code=404)
+    return templates.TemplateResponse(request, "_source_settings.html", {"source": source})
 
 
 @router.delete("/sources/{source_id}", response_class=HTMLResponse)
