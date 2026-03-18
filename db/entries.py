@@ -19,24 +19,29 @@ def create_entry(
     source_id: int,
     title: str,
     url: Optional[str] = None,
+    guid: Optional[str] = None,
     author: Optional[str] = None,
     description: Optional[str] = None,
     pub_date: Optional[str] = None,
     duration: Optional[str] = None,
 ) -> dict:
-    """Create entry; silently returns existing row on duplicate URL."""
+    """Create entry; silently returns existing row on duplicate guid or URL."""
     import sqlite3 as _sqlite3
     try:
         with get_db() as conn:
             cursor = conn.execute(
-                "INSERT INTO entries (source_id, title, url, author, description, pub_date, duration) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (source_id, title, url, author, description, pub_date, duration),
+                "INSERT INTO entries (source_id, title, url, guid, author, description, pub_date, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (source_id, title, url, guid, author, description, pub_date, duration),
             )
             row = conn.execute(_SELECT + "WHERE e.id = ?", (cursor.lastrowid,)).fetchone()
             return _row(row)
     except _sqlite3.IntegrityError:
-        # Duplicate URL — open a fresh connection to fetch the existing entry
+        # Duplicate guid or URL — fetch existing entry
         with get_db() as conn:
+            if guid:
+                row = conn.execute(_SELECT + "WHERE e.guid = ?", (guid,)).fetchone()
+                if row:
+                    return _row(row)
             row = conn.execute(_SELECT + "WHERE e.url = ?", (url,)).fetchone()
             return _row(row)
 

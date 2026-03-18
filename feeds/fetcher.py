@@ -19,6 +19,7 @@ def parse_feed_entry(entry) -> dict:
     return {
         "title": getattr(entry, "title", "") or "",
         "url": getattr(entry, "link", None),
+        "guid": getattr(entry, "id", None) or getattr(entry, "link", None),
         "author": getattr(entry, "author", None),
         "description": getattr(entry, "summary", None) or getattr(entry, "description", None),
         "pub_date": pub_date,

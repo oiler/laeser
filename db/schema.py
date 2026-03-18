@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS entries (
     author       TEXT,
     pub_date     TEXT,
     url          TEXT UNIQUE,
+    guid         TEXT UNIQUE,
     description  TEXT,
     duration     TEXT,
     audio_path   TEXT,
@@ -51,3 +52,7 @@ def init_db() -> None:
     """Create all tables and seed the synthetic Manual Entries source."""
     with get_db() as conn:
         conn.executescript(_SCHEMA)
+        # Migration: add guid column to existing databases
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(entries)")}
+        if "guid" not in cols:
+            conn.execute("ALTER TABLE entries ADD COLUMN guid TEXT UNIQUE")

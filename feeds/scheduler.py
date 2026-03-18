@@ -34,6 +34,7 @@ def refresh_source(source_id: int, source: dict) -> None:
             source_id=source_id,
             title=parsed["title"] or "Untitled",
             url=parsed["url"],
+            guid=parsed.get("guid"),
             author=parsed.get("author"),
             description=parsed.get("description"),
             pub_date=parsed.get("pub_date"),
