@@ -33,7 +33,7 @@ def entry_list(
 ):
     entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
-        request, "_entry_list.html", {"entries": entries, "source_id": source_id, "sort": sort}
+        request, "_entry_list.html", {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort}
     )
 
 
@@ -42,13 +42,15 @@ def save_bulk(
     request: Request,
     entry_ids: list[int] = Form(default=[]),
     source_id: Optional[int] = Form(None),
+    saved: bool = Form(False),
     sort: str = Form("desc"),
 ):
     for entry_id in entry_ids:
         _save_one(entry_id)
-    entries = list_entries(source_id=source_id, sort=sort)
+    entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
-        request, "_entry_list.html", {"entries": entries, "source_id": source_id, "sort": sort}
+        request, "_entry_list.html",
+        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort},
     )
 
 
