@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import frontmatter
+from markdownify import markdownify
 
 from naming import entry_base
 
@@ -26,8 +27,11 @@ def write_entry_file(entry: dict) -> Path:
     base = entry_base(entry["title"], entry.get("pub_date"))
     file_path = source_folder / f"{base}.md"
 
+    description = entry.get("description") or ""
+    body = markdownify(description) if description else ""
+
     post = frontmatter.Post(
-        entry.get("description") or "",
+        body,
         title=entry["title"],
         source=entry["source_name"],
         author=entry.get("author") or "",

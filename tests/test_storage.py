@@ -52,7 +52,7 @@ def test_write_entry_file_frontmatter(tmp_path):
     assert post["url"] == "https://example.com/ep"
     assert post["audio_path"] == "library/my-show/ep.mp3"
     assert post["tags"] == ["security", "networking"]
-    assert post.content == "Episode description."
+    assert post.content.strip() == "Episode description."
 
 
 def test_write_entry_file_overwrites_on_resave(tmp_path):
@@ -67,4 +67,47 @@ def test_write_entry_file_overwrites_on_resave(tmp_path):
     path2 = write_entry_file(entry)
     assert path1 == path2
     post = frontmatter.load(str(path2))
-    assert post.content == "Updated save."
+    assert post.content.strip() == "Updated save."
+
+
+def test_write_entry_file_converts_html_description_to_markdown(tmp_path):
+    os.environ["LAESER_LIBRARY_PATH"] = str(tmp_path)
+    entry = {
+        "title": "HTML Body Test",
+        "source_name": "My Show",
+        "source_folder": "my-show",
+        "author": "",
+        "pub_date": "2024-05-01",
+        "url": "",
+        "audio_path": "",
+        "description": "<p>This is <strong>bold</strong> and <a href=\"https://example.com\">a link</a>.</p>",
+        "tags": [],
+    }
+    path = write_entry_file(entry)
+    post = frontmatter.load(str(path))
+    body = post.content
+    # No raw HTML tags should remain
+    assert "<p>" not in body
+    assert "<strong>" not in body
+    assert "<a href" not in body
+    # Markdown equivalents should be present
+    assert "**bold**" in body
+    assert "[a link](https://example.com)" in body
+
+
+def test_write_entry_file_empty_description_stays_empty(tmp_path):
+    os.environ["LAESER_LIBRARY_PATH"] = str(tmp_path)
+    entry = {
+        "title": "No Description",
+        "source_name": "My Show",
+        "source_folder": "my-show",
+        "author": "",
+        "pub_date": "2024-05-01",
+        "url": "",
+        "audio_path": "",
+        "description": "",
+        "tags": [],
+    }
+    path = write_entry_file(entry)
+    post = frontmatter.load(str(path))
+    assert post.content.strip() == ""
