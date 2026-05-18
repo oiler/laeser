@@ -168,3 +168,17 @@ def test_download_bulk_skips_already_downloaded(client, source):
                        data={"entry_ids": [e["id"]], "sort": "desc"})
     assert resp.status_code == 200
     assert db_get(e["id"])["audio_status"] == "downloaded"
+
+
+def test_toolbar_has_download_button(client, entry):
+    resp = client.get("/entries")
+    assert 'hx-post="/entries/download-bulk"' in resp.text
+    assert "Download audio" in resp.text
+
+
+def test_entry_list_shows_download_status_icons(client, source):
+    from db.entries import create_entry, set_audio_status
+    e = create_entry(source_id=source["id"], title="Queued Ep", url="https://example.com/qe")
+    set_audio_status(e["id"], "queued")
+    resp = client.get("/entries")
+    assert "Audio download queued" in resp.text

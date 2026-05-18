@@ -35,6 +35,7 @@ main { border-right: 1px solid #ddd; overflow-y: auto; background: white; }
 .save-btn { background: none; border: none; font-size: 15px; cursor: pointer; color: #bbb; padding: 0; line-height: 1; }
 .save-btn.saved { color: #f5a623; }
 .icon-podcast { font-size: 10px; margin-left: 3px; color: #888; }
+.icon-audio-status { font-size: 10px; margin-left: 3px; color: #888; }
 .empty-state { padding: 24px; color: #999; }
 .col-select { width: 28px; text-align: center; }
 .col-select input { cursor: pointer; }

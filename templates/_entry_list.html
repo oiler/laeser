@@ -19,6 +19,12 @@
             hx-include=".entry-checkbox, #bulk-context"
             hx-target="#entry-list"
             hx-swap="innerHTML">Save selected</button>
+    <button type="button"
+            class="bulk-download-btn"
+            hx-post="/entries/download-bulk"
+            hx-include=".entry-checkbox, #bulk-context"
+            hx-target="#entry-list"
+            hx-swap="innerHTML">Download audio</button>
     <button type="button" id="bulk-clear">Clear</button>
     <span id="bulk-context" hidden>
         {% if source_id %}<input type="hidden" name="source_id" value="{{ source_id }}">{% endif %}
@@ -53,7 +59,11 @@
         <td class="col-save" onclick="event.stopPropagation()">{% include "_save_button.html" %}</td>
         <td class="col-title">
             {{ entry.title }}
-            {% if entry.audio_path %}<span class="icon-podcast" title="Podcast episode">🎙</span>{% endif %}
+            {% if entry.audio_path %}<span class="icon-podcast" title="Podcast episode">🎙</span>
+            {% elif entry.audio_status == "queued" %}<span class="icon-audio-status" title="Audio download queued">⏳</span>
+            {% elif entry.audio_status == "downloading" %}<span class="icon-audio-status" title="Downloading audio">↓</span>
+            {% elif entry.audio_status == "failed" %}<span class="icon-audio-status" title="Audio download failed">⚠</span>
+            {% endif %}
         </td>
         {% if not source_id %}<td class="col-source">{{ entry.source_name }}</td>{% endif %}
         <td class="col-date">{{ entry.pub_date or "" }}</td>
