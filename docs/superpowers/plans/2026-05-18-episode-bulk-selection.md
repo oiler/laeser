@@ -180,6 +180,7 @@ In `templates/_entry_list.html`, replace the line `<table class="entry-list">` w
     <a id="bulk-clear" href="#">Clear</a>
     <span id="bulk-context" hidden>
         {% if source_id %}<input type="hidden" name="source_id" value="{{ source_id }}">{% endif %}
+        {% if saved %}<input type="hidden" name="saved" value="1">{% endif %}
         <input type="hidden" name="sort" value="{{ sort }}">
     </span>
 </div>
@@ -256,7 +257,7 @@ In `templates/_entry_list.html`, add this block immediately before the final `{%
     const selectAll = document.getElementById('select-all');
     const toolbar = document.getElementById('bulk-toolbar');
     const count = document.getElementById('bulk-count');
-    const clearLink = document.getElementById('bulk-clear');
+    const clearBtn = document.getElementById('bulk-clear');
     let lastIndex = null;
 
     function updateToolbar() {
@@ -284,8 +285,7 @@ In `templates/_entry_list.html`, add this block immediately before the final `{%
         updateToolbar();
     });
 
-    clearLink.addEventListener('click', (e) => {
-        e.preventDefault();
+    clearBtn.addEventListener('click', () => {
         checkboxes.forEach(cb => { cb.checked = false; });
         selectAll.checked = false;
         lastIndex = null;
@@ -347,7 +347,7 @@ In `static/style.css`, add the following at the end of the `/* Entry list */` se
 .bulk-toolbar #bulk-count { font-size: 12px; color: #555; font-weight: 600; }
 .bulk-save-btn { padding: 4px 12px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .bulk-save-btn:hover { background: #0055aa; }
-.bulk-toolbar #bulk-clear { font-size: 12px; color: #0066cc; cursor: pointer; }
+.bulk-toolbar #bulk-clear { background: none; border: none; padding: 0; font-size: 12px; color: #0066cc; cursor: pointer; }
 ```
 
 - [ ] **Step 2: Manual verification**
