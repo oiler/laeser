@@ -11,9 +11,25 @@
 {% set sort_icon = "↓" if sort == "desc" else "↑" %}
 
 {% if entries %}
+<div id="bulk-toolbar" class="bulk-toolbar hidden">
+    <span id="bulk-count">0 selected</span>
+    <button type="button"
+            class="bulk-save-btn"
+            hx-post="/entries/save-bulk"
+            hx-include=".entry-checkbox, #bulk-context"
+            hx-target="#entry-list"
+            hx-swap="innerHTML">Save selected</button>
+    <a id="bulk-clear" href="#">Clear</a>
+    <span id="bulk-context" hidden>
+        {% if source_id %}<input type="hidden" name="source_id" value="{{ source_id }}">{% endif %}
+        {% if saved %}<input type="hidden" name="saved" value="1">{% endif %}
+        <input type="hidden" name="sort" value="{{ sort }}">
+    </span>
+</div>
 <table class="entry-list">
     <thead>
         <tr>
+            <th class="col-select"><input type="checkbox" id="select-all" title="Select all"></th>
             <th class="col-save"></th>
             <th class="col-title">Title</th>
             {% if not source_id %}<th class="col-source">Source</th>{% endif %}
@@ -26,10 +42,14 @@
     </thead>
     <tbody>
     {% for entry in entries %}
-    <tr class="entry-row {% if not entry.read_at %}unread{% endif %}"
+    <tr class="entry-row {% if not entry.read_at %}unread{% endif %}{% if entry.is_saved %} saved{% endif %}"
         hx-get="/entries/{{ entry.id }}"
         hx-target="#entry-reader"
         hx-push-url="false">
+        <td class="col-select" onclick="event.stopPropagation()">
+            <input type="checkbox" class="entry-checkbox" name="entry_ids"
+                   value="{{ entry.id }}" data-index="{{ loop.index0 }}">
+        </td>
         <td class="col-save" onclick="event.stopPropagation()">{% include "_save_button.html" %}</td>
         <td class="col-title">
             {{ entry.title }}

@@ -109,3 +109,17 @@ def test_save_bulk_empty_selection(client, entry):
     resp = client.post("/entries/save-bulk", data={"sort": "desc"})
     assert resp.status_code == 200
     assert "Ep 1047" in resp.text  # list still renders
+
+
+def test_entry_list_has_checkboxes(client, entry):
+    resp = client.get("/entries")
+    assert 'class="entry-checkbox"' in resp.text
+    assert 'id="select-all"' in resp.text
+
+
+def test_saved_entry_row_has_saved_class(client, entry):
+    resp = client.get("/entries")
+    assert "entry-row unread" in resp.text  # unsaved, no saved class
+    client.post(f"/entries/{entry['id']}/save")
+    resp = client.get("/entries")
+    assert "entry-row unread saved" in resp.text  # row now carries the saved class
