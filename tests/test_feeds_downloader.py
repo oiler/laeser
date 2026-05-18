@@ -1,7 +1,10 @@
+import os
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 from feeds.downloader import download_file
+from feeds.scheduler import _download_audio
 
 
 def _mock_response(status_code=200, content=b"audio data", headers=None):
@@ -61,12 +64,6 @@ def test_download_file_cleans_up_on_fresh_failure(tmp_path):
         result = download_file("https://example.com/ep.mp3", dest, delay_seconds=0)
     assert result is False
     assert not dest.exists()
-
-
-from pathlib import Path
-import os
-
-from feeds.scheduler import _download_audio
 
 
 def test_download_audio_uses_date_slug_filename(tmp_path, monkeypatch):
