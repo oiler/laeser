@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 import frontmatter
-from storage import write_entry_file, slugify
+from storage import write_entry_file
+from naming import slugify
 
 
 def test_slugify():
