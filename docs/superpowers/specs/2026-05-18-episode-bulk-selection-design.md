@@ -118,6 +118,22 @@ re-rendered entry list.
 - File-write failures inside `write_entry_file` are not specially handled here —
   this design does not change the existing single-save error behavior.
 
+## Future Extension
+
+The selection mechanics are deliberately action-agnostic: the checkbox column,
+Shift+click range, select-all, and toolbar produce a set of selected `entry_ids`
+and know nothing about what is done with them. The toolbar is built to host
+multiple action buttons, not just "Save selected".
+
+A future bulk audio download feature is therefore an additive change, not a
+refactor: add a "Download audio" button to the toolbar (reusing the same
+selection JS and `entry_ids`) plus a new endpoint. That endpoint differs in kind
+from bulk save — audio downloads are long-running, so it must *enqueue* download
+jobs and return immediately rather than blocking on a synchronous re-render. The
+batching/rate-limiting plumbing for that already exists (`downloader.py`'s
+`DEFAULT_DELAY_SECONDS`, `feeds/scheduler.py`). The job-queue infrastructure is
+intentionally **not** designed here — it belongs to that separate feature.
+
 ## Testing
 
 - `tests/test_routes_entries.py`: add tests for `POST /entries/save-bulk` —
