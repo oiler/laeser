@@ -76,3 +76,36 @@ def test_remove_tag_from_entry(client, entry):
     resp = client.delete(f"/entries/{entry['id']}/tags/{tag['id']}")
     assert resp.status_code == 200
     assert "networking" not in resp.text
+
+
+def test_save_bulk_saves_multiple(client, source):
+    from db.entries import create_entry, get_entry as db_get
+    e1 = create_entry(source_id=source["id"], title="Bulk A",
+                      url="https://example.com/a", description="A")
+    e2 = create_entry(source_id=source["id"], title="Bulk B",
+                      url="https://example.com/b", description="B")
+    resp = client.post("/entries/save-bulk",
+                       data={"entry_ids": [e1["id"], e2["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert "Bulk A" in resp.text and "Bulk B" in resp.text
+    assert db_get(e1["id"])["is_saved"] == 1
+    assert db_get(e2["id"])["is_saved"] == 1
+
+
+def test_save_bulk_skips_already_saved(client, source):
+    from db.entries import create_entry, get_entry as db_get
+    e1 = create_entry(source_id=source["id"], title="Already",
+                      url="https://example.com/c", description="C")
+    client.post(f"/entries/{e1['id']}/save")
+    saved_path = db_get(e1["id"])["file_path"]
+    # Bulk-saving an already-saved entry must not change it.
+    resp = client.post("/entries/save-bulk",
+                       data={"entry_ids": [e1["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert db_get(e1["id"])["file_path"] == saved_path
+
+
+def test_save_bulk_empty_selection(client, entry):
+    resp = client.post("/entries/save-bulk", data={"sort": "desc"})
+    assert resp.status_code == 200
+    assert "Ep 1047" in resp.text  # list still renders

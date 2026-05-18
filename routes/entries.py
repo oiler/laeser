@@ -37,6 +37,21 @@ def entry_list(
     )
 
 
+@router.post("/entries/save-bulk", response_class=HTMLResponse)
+def save_bulk(
+    request: Request,
+    entry_ids: list[int] = Form(default=[]),
+    source_id: Optional[int] = Form(None),
+    sort: str = Form("desc"),
+):
+    for entry_id in entry_ids:
+        _save_one(entry_id)
+    entries = list_entries(source_id=source_id, sort=sort)
+    return templates.TemplateResponse(
+        request, "_entry_list.html", {"entries": entries, "source_id": source_id, "sort": sort}
+    )
+
+
 @router.get("/entries/{entry_id}", response_class=HTMLResponse)
 def entry_reader(request: Request, entry_id: int):
     entry = get_entry(entry_id)
@@ -65,8 +80,8 @@ def _save_button_response(request: Request, entry_id: int) -> HTMLResponse:
     )
 
 
-@router.post("/entries/{entry_id}/save", response_class=HTMLResponse)
-def save_entry_route(request: Request, entry_id: int):
+def _save_one(entry_id: int) -> None:
+    """Save a single entry to the vault. No-ops on missing or already-saved entries."""
     entry = get_entry(entry_id)
     if entry and not entry["is_saved"]:
         path = write_entry_file({
@@ -81,6 +96,11 @@ def save_entry_route(request: Request, entry_id: int):
             "tags": [t["name"] for t in get_entry_tags(entry_id)],
         })
         save_entry(entry_id, file_path=str(path))
+
+
+@router.post("/entries/{entry_id}/save", response_class=HTMLResponse)
+def save_entry_route(request: Request, entry_id: int):
+    _save_one(entry_id)
     return _save_button_response(request, entry_id)
 
 
