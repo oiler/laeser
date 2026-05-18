@@ -11,7 +11,6 @@ Usage:
 """
 import argparse
 import logging
-import os
 from pathlib import Path
 
 from db.connection import get_db
@@ -69,8 +68,8 @@ def _migrate_one(row: dict, library: Path, dry_run: bool) -> None:
                 logger.warning(
                     f"audio file missing for entry {row['id']}: {current_audio_rel}"
                 )
-        if not dry_run:
-            update_entry_audio_path(row["id"], new_audio_rel)
+            if not dry_run:
+                update_entry_audio_path(row["id"], new_audio_rel)
 
     # ---- markdown ----
     new_md_rel = f"{source_folder}/{base}.md"

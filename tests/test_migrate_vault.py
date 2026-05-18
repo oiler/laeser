@@ -77,7 +77,6 @@ def test_migrate_is_idempotent(tmp_path):
 
     new_md = library / "my-show" / "2024-04-02-the-xz-backdoor.md"
     first_content = new_md.read_text(encoding="utf-8")
-    first_mtime = new_md.stat().st_mtime_ns
 
     migrate(dry_run=False)
 
