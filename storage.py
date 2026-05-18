@@ -30,6 +30,11 @@ def write_entry_file(entry: dict) -> Path:
     description = entry.get("description") or ""
     body = markdownify(description) if description else ""
 
+    audio_path = entry.get("audio_path") or ""
+    if audio_path:
+        audio_basename = Path(audio_path).name
+        body = f"![[{audio_basename}]]\n\n{body}"
+
     post = frontmatter.Post(
         body,
         title=entry["title"],

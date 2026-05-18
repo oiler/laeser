@@ -52,7 +52,8 @@ def test_write_entry_file_frontmatter(tmp_path):
     assert post["url"] == "https://example.com/ep"
     assert post["audio_path"] == "library/my-show/ep.mp3"
     assert post["tags"] == ["security", "networking"]
-    assert post.content.strip() == "Episode description."
+    assert post.content.startswith("![[ep.mp3]]")
+    assert "Episode description." in post.content
 
 
 def test_write_entry_file_overwrites_on_resave(tmp_path):
@@ -111,3 +112,42 @@ def test_write_entry_file_empty_description_stays_empty(tmp_path):
     path = write_entry_file(entry)
     post = frontmatter.load(str(path))
     assert post.content.strip() == ""
+
+
+def test_write_entry_file_prepends_audio_embed_when_audio_path_set(tmp_path):
+    os.environ["LAESER_LIBRARY_PATH"] = str(tmp_path)
+    entry = {
+        "title": "Audio Episode",
+        "source_name": "My Show",
+        "source_folder": "my-show",
+        "author": "",
+        "pub_date": "2024-05-01",
+        "url": "",
+        "audio_path": "my-show/2024-05-01-audio-episode.mp3",
+        "description": "Show notes.",
+        "tags": [],
+    }
+    path = write_entry_file(entry)
+    post = frontmatter.load(str(path))
+    body = post.content
+    # Embed must use only the basename, not the full relative path
+    assert body.startswith("![[2024-05-01-audio-episode.mp3]]")
+    assert "Show notes." in body
+
+
+def test_write_entry_file_no_embed_when_audio_path_empty(tmp_path):
+    os.environ["LAESER_LIBRARY_PATH"] = str(tmp_path)
+    entry = {
+        "title": "Text Only",
+        "source_name": "My Show",
+        "source_folder": "my-show",
+        "author": "",
+        "pub_date": "2024-05-01",
+        "url": "",
+        "audio_path": "",
+        "description": "Just text.",
+        "tags": [],
+    }
+    path = write_entry_file(entry)
+    post = frontmatter.load(str(path))
+    assert "![[" not in post.content
