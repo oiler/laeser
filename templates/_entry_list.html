@@ -19,7 +19,7 @@
             hx-include=".entry-checkbox, #bulk-context"
             hx-target="#entry-list"
             hx-swap="innerHTML">Save selected</button>
-    <a id="bulk-clear" href="#">Clear</a>
+    <button type="button" id="bulk-clear">Clear</button>
     <span id="bulk-context" hidden>
         {% if source_id %}<input type="hidden" name="source_id" value="{{ source_id }}">{% endif %}
         {% if saved %}<input type="hidden" name="saved" value="1">{% endif %}
@@ -29,7 +29,7 @@
 <table class="entry-list">
     <thead>
         <tr>
-            <th class="col-select"><input type="checkbox" id="select-all" title="Select all"></th>
+            <th class="col-select"><input type="checkbox" id="select-all" title="Select all" aria-label="Select all"></th>
             <th class="col-save"></th>
             <th class="col-title">Title</th>
             {% if not source_id %}<th class="col-source">Source</th>{% endif %}
