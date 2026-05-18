@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from db.schema import init_db
 from feeds.scheduler import setup_scheduler, shutdown_scheduler
+from feeds.download_queue import start_worker, stop_worker
 from routes.sources import router as sources_router
 from routes.entries import router as entries_router
 from routes.search import router as search_router
@@ -16,7 +17,9 @@ from routes.audio import router as audio_router
 async def lifespan(app: FastAPI):
     init_db()
     setup_scheduler(app)
+    start_worker()
     yield
+    stop_worker()
     shutdown_scheduler()
 
 
