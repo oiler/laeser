@@ -8,6 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from db.entries import create_entry, update_entry_audio_path, update_entry_fetch_status
+from naming import entry_base
 from db.sources import list_sources, update_source_fetch_status
 from feeds.downloader import download_file
 from feeds.fetcher import fetch_and_parse_feed
@@ -50,7 +51,8 @@ def _download_audio(entry: dict, url: str, folder_name: str) -> None:
     """Download audio for an entry if not already present."""
     library = Path(os.environ.get("LAESER_LIBRARY_PATH", "library"))
     ext = url.split(".")[-1].split("?")[0] or "mp3"
-    filename = f"{entry['pub_date'][:10] if entry.get('pub_date') else 'unknown'}-{entry['id']}.{ext}"
+    base = entry_base(entry["title"], entry.get("pub_date"))
+    filename = f"{base}.{ext}"
     dest = library / folder_name / filename
 
     if dest.exists():
@@ -58,8 +60,6 @@ def _download_audio(entry: dict, url: str, folder_name: str) -> None:
 
     success = download_file(url, dest, delay_seconds=3)
     if success:
-        # Store path relative to library root (e.g. "security-now/sn-1047.mp3")
-        # The /audio/{file_path} route appends this to the library root to serve the file.
         audio_path = str(dest.relative_to(library))
         update_entry_audio_path(entry["id"], audio_path)
         logger.info(f"Audio saved: {audio_path}")

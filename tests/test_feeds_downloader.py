@@ -61,3 +61,52 @@ def test_download_file_cleans_up_on_fresh_failure(tmp_path):
         result = download_file("https://example.com/ep.mp3", dest, delay_seconds=0)
     assert result is False
     assert not dest.exists()
+
+
+from pathlib import Path
+import os
+
+from feeds.scheduler import _download_audio
+
+
+def test_download_audio_uses_date_slug_filename(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAESER_LIBRARY_PATH", str(tmp_path))
+    entry = {
+        "id": 42,
+        "title": "The XZ Backdoor (2024)",
+        "pub_date": "2024-04-02",
+    }
+    captured = {}
+
+    def fake_download(url, dest, delay_seconds=0):
+        captured["dest"] = dest
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b"audio")
+        return True
+
+    with patch("feeds.scheduler.download_file", side_effect=fake_download), \
+         patch("feeds.scheduler.update_entry_audio_path") as mock_update:
+        _download_audio(entry, "https://example.com/ep.mp3", "my-show")
+
+    expected = tmp_path / "my-show" / "2024-04-02-the-xz-backdoor-2024.mp3"
+    assert captured["dest"] == expected
+    mock_update.assert_called_once_with(42, "my-show/2024-04-02-the-xz-backdoor-2024.mp3")
+
+
+def test_download_audio_preserves_non_mp3_extension(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAESER_LIBRARY_PATH", str(tmp_path))
+    entry = {"id": 7, "title": "Some Episode", "pub_date": "2024-04-02"}
+    captured = {}
+
+    def fake_download(url, dest, delay_seconds=0):
+        captured["dest"] = dest
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b"a")
+        return True
+
+    with patch("feeds.scheduler.download_file", side_effect=fake_download), \
+         patch("feeds.scheduler.update_entry_audio_path"):
+        _download_audio(entry, "https://example.com/ep.m4a", "my-show")
+
+    assert captured["dest"].suffix == ".m4a"
+    assert captured["dest"].name == "2024-04-02-some-episode.m4a"
