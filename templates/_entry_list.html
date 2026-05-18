@@ -61,6 +61,51 @@
     {% endfor %}
     </tbody>
 </table>
+<script>
+(function () {
+    const checkboxes = Array.from(document.querySelectorAll('#entry-list .entry-checkbox'));
+    if (!checkboxes.length) return;
+    const selectAll = document.getElementById('select-all');
+    const toolbar = document.getElementById('bulk-toolbar');
+    const count = document.getElementById('bulk-count');
+    const clearBtn = document.getElementById('bulk-clear');
+    let lastIndex = null;
+
+    function updateToolbar() {
+        const n = checkboxes.filter(cb => cb.checked).length;
+        count.textContent = n + ' selected';
+        toolbar.classList.toggle('hidden', n === 0);
+        selectAll.checked = n === checkboxes.length;
+    }
+
+    checkboxes.forEach((cb, i) => {
+        cb.addEventListener('click', (e) => {
+            if (e.shiftKey && lastIndex !== null) {
+                const lo = Math.min(lastIndex, i);
+                const hi = Math.max(lastIndex, i);
+                for (let j = lo; j <= hi; j++) checkboxes[j].checked = cb.checked;
+            }
+            lastIndex = i;
+            updateToolbar();
+        });
+    });
+
+    selectAll.addEventListener('click', () => {
+        checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+        lastIndex = null;
+        updateToolbar();
+    });
+
+    clearBtn.addEventListener('click', () => {
+        checkboxes.forEach(cb => { cb.checked = false; });
+        selectAll.checked = false;
+        lastIndex = null;
+        updateToolbar();
+    });
+
+    updateToolbar();
+})();
+</script>
 {% else %}
 <p class="empty-state">No entries found.</p>
 {% endif %}
