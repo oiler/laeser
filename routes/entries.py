@@ -18,6 +18,7 @@ from db.entries import (
     unsave_entry,
 )
 from db.tags import add_tag_to_entry, create_tag, get_entry_tags, remove_tag_from_entry
+from feeds.download_queue import enqueue
 from storage import write_entry_file
 
 router = APIRouter()
@@ -47,6 +48,30 @@ def save_bulk(
 ):
     for entry_id in entry_ids:
         _save_one(entry_id)
+    entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
+    return templates.TemplateResponse(
+        request, "_entry_list.html",
+        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort},
+    )
+
+
+@router.post("/entries/download-bulk", response_class=HTMLResponse)
+def download_bulk(
+    request: Request,
+    entry_ids: list[int] = Form(default=[]),
+    source_id: Optional[int] = Form(None),
+    saved: bool = Form(False),
+    sort: str = Form("desc"),
+):
+    for entry_id in entry_ids:
+        entry = get_entry(entry_id)
+        if (
+            entry
+            and entry.get("enclosure_url")
+            and not entry.get("audio_path")
+            and entry["audio_status"] not in ("queued", "downloading")
+        ):
+            enqueue(entry_id)
     entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
         request, "_entry_list.html",

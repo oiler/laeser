@@ -133,3 +133,38 @@ def test_save_bulk_preserves_source_id(client, source):
                        data={"entry_ids": [e1["id"]], "source_id": source["id"], "sort": "desc"})
     assert resp.status_code == 200
     assert "Filtered" in resp.text
+
+
+def test_download_bulk_enqueues_eligible_entries(client, source):
+    from db.entries import create_entry, get_entry as db_get
+    e1 = create_entry(source_id=source["id"], title="DL A", url="https://example.com/dla",
+                      enclosure_url="https://cdn.example.com/dla.mp3")
+    e2 = create_entry(source_id=source["id"], title="DL B", url="https://example.com/dlb",
+                      enclosure_url="https://cdn.example.com/dlb.mp3")
+    resp = client.post("/entries/download-bulk",
+                       data={"entry_ids": [e1["id"], e2["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert db_get(e1["id"])["audio_status"] == "queued"
+    assert db_get(e2["id"])["audio_status"] == "queued"
+
+
+def test_download_bulk_skips_entry_without_enclosure_url(client, source):
+    from db.entries import create_entry, get_entry as db_get
+    e = create_entry(source_id=source["id"], title="No Enclosure", url="https://example.com/ne")
+    resp = client.post("/entries/download-bulk",
+                       data={"entry_ids": [e["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert db_get(e["id"])["audio_status"] == "none"
+
+
+def test_download_bulk_skips_already_downloaded(client, source):
+    from db.entries import create_entry, get_entry as db_get
+    from db.entries import update_entry_audio_path, set_audio_status
+    e = create_entry(source_id=source["id"], title="Done", url="https://example.com/done",
+                     enclosure_url="https://cdn.example.com/done.mp3")
+    update_entry_audio_path(e["id"], "security-now/done.mp3")
+    set_audio_status(e["id"], "downloaded")
+    resp = client.post("/entries/download-bulk",
+                       data={"entry_ids": [e["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert db_get(e["id"])["audio_status"] == "downloaded"
