@@ -24,11 +24,14 @@ CREATE TABLE IF NOT EXISTS entries (
     description  TEXT,
     duration     TEXT,
     audio_path   TEXT,
+    enclosure_url TEXT,
     file_path    TEXT,
     is_saved     INTEGER NOT NULL DEFAULT 0,
     read_at      TEXT,
     fetch_status TEXT NOT NULL DEFAULT 'pending'
                  CHECK(fetch_status IN ('pending', 'ok', 'fetch_failed')),
+    audio_status TEXT NOT NULL DEFAULT 'none'
+                 CHECK(audio_status IN ('none', 'queued', 'downloading', 'downloaded', 'failed')),
     created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -56,4 +59,15 @@ def init_db() -> None:
         cols = {row[1] for row in conn.execute("PRAGMA table_info(entries)")}
         if "guid" not in cols:
             conn.execute("ALTER TABLE entries ADD COLUMN guid TEXT")
+        if "enclosure_url" not in cols:
+            conn.execute("ALTER TABLE entries ADD COLUMN enclosure_url TEXT")
+        if "audio_status" not in cols:
+            conn.execute(
+                "ALTER TABLE entries ADD COLUMN audio_status TEXT NOT NULL DEFAULT 'none' "
+                "CHECK(audio_status IN ('none', 'queued', 'downloading', 'downloaded', 'failed'))"
+            )
+            conn.execute(
+                "UPDATE entries SET audio_status = 'downloaded' "
+                "WHERE audio_path IS NOT NULL AND audio_status = 'none'"
+            )
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_entries_guid ON entries(guid) WHERE guid IS NOT NULL")

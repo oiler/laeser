@@ -24,14 +24,16 @@ def create_entry(
     description: Optional[str] = None,
     pub_date: Optional[str] = None,
     duration: Optional[str] = None,
+    enclosure_url: Optional[str] = None,
 ) -> dict:
     """Create entry; silently returns existing row on duplicate guid or URL."""
     import sqlite3 as _sqlite3
     try:
         with get_db() as conn:
             cursor = conn.execute(
-                "INSERT INTO entries (source_id, title, url, guid, author, description, pub_date, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (source_id, title, url, guid, author, description, pub_date, duration),
+                "INSERT INTO entries (source_id, title, url, guid, author, description, pub_date, duration, enclosure_url) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (source_id, title, url, guid, author, description, pub_date, duration, enclosure_url),
             )
             row = conn.execute(_SELECT + "WHERE e.id = ?", (cursor.lastrowid,)).fetchone()
             return _row(row)
@@ -109,3 +111,20 @@ def search_entries(query: str, source_ids: Optional[list[int]] = None) -> list[d
     sql += " ORDER BY e.pub_date DESC, e.created_at DESC"
     with get_db() as conn:
         return [_row(r) for r in conn.execute(sql, params).fetchall()]
+
+
+def set_audio_status(entry_id: int, status: str) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE entries SET audio_status = ? WHERE id = ?", (status, entry_id))
+
+
+def set_enclosure_url(entry_id: int, url: str) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE entries SET enclosure_url = ? WHERE id = ?", (url, entry_id))
+
+
+def list_entries_by_audio_status(statuses: list[str]) -> list[dict]:
+    placeholders = ",".join("?" * len(statuses))
+    sql = _SELECT + f"WHERE e.audio_status IN ({placeholders})"
+    with get_db() as conn:
+        return [_row(r) for r in conn.execute(sql, statuses).fetchall()]

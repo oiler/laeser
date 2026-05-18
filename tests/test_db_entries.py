@@ -112,3 +112,42 @@ def test_search_filtered_by_source_ids(source):
     results = search_entries(query="Security", source_ids=[source["id"]])
     assert len(results) == 1
     assert results[0]["source_name"] == "Security Now"
+
+
+def test_create_entry_stores_enclosure_url(source):
+    from db.entries import create_entry, get_entry
+    e = create_entry(source_id=source["id"], title="With Audio",
+                      url="https://example.com/wa", enclosure_url="https://cdn.example.com/wa.mp3")
+    assert get_entry(e["id"])["enclosure_url"] == "https://cdn.example.com/wa.mp3"
+
+
+def test_new_entry_audio_status_defaults_to_none(source):
+    from db.entries import create_entry, get_entry
+    e = create_entry(source_id=source["id"], title="No Audio Yet",
+                      url="https://example.com/nay")
+    assert get_entry(e["id"])["audio_status"] == "none"
+
+
+def test_set_audio_status(source):
+    from db.entries import create_entry, get_entry, set_audio_status
+    e = create_entry(source_id=source["id"], title="Status Ep", url="https://example.com/se")
+    set_audio_status(e["id"], "queued")
+    assert get_entry(e["id"])["audio_status"] == "queued"
+
+
+def test_set_enclosure_url(source):
+    from db.entries import create_entry, get_entry, set_enclosure_url
+    e = create_entry(source_id=source["id"], title="Backfill Ep", url="https://example.com/be")
+    set_enclosure_url(e["id"], "https://cdn.example.com/be.mp3")
+    assert get_entry(e["id"])["enclosure_url"] == "https://cdn.example.com/be.mp3"
+
+
+def test_list_entries_by_audio_status(source):
+    from db.entries import create_entry, set_audio_status, list_entries_by_audio_status
+    e1 = create_entry(source_id=source["id"], title="Q1", url="https://example.com/q1")
+    e2 = create_entry(source_id=source["id"], title="D1", url="https://example.com/d1")
+    create_entry(source_id=source["id"], title="N1", url="https://example.com/n1")
+    set_audio_status(e1["id"], "queued")
+    set_audio_status(e2["id"], "downloading")
+    ids = {e["id"] for e in list_entries_by_audio_status(["queued", "downloading"])}
+    assert ids == {e1["id"], e2["id"]}

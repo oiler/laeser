@@ -40,6 +40,7 @@ def refresh_source(source_id: int, source: dict) -> None:
             description=parsed.get("description"),
             pub_date=parsed.get("pub_date"),
             duration=parsed.get("duration"),
+            enclosure_url=parsed.get("enclosure_url"),
         )
         update_entry_fetch_status(entry["id"], "ok")
 
