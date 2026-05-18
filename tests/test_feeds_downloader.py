@@ -107,3 +107,36 @@ def test_download_audio_preserves_non_mp3_extension(tmp_path, monkeypatch):
 
     assert captured["dest"].suffix == ".m4a"
     assert captured["dest"].name == "2024-04-02-some-episode.m4a"
+
+
+def test_audio_dest_path_normal_extension():
+    from pathlib import Path
+    from feeds.downloader import audio_dest_path
+    dest = audio_dest_path(Path("/lib"), "security-now", "Episode 1047", "2026-05-01",
+                           "https://cdn.example.com/sn1047.mp3")
+    assert dest == Path("/lib/security-now/2026-05-01-episode-1047.mp3")
+
+
+def test_audio_dest_path_strips_query_string():
+    from pathlib import Path
+    from feeds.downloader import audio_dest_path
+    dest = audio_dest_path(Path("/lib"), "pod", "Ep", "2026-05-01",
+                           "https://cdn.example.com/ep.mp3?token=abc123")
+    assert dest.suffix == ".mp3"
+
+
+def test_audio_dest_path_extensionless_url_falls_back_to_mp3():
+    from pathlib import Path
+    from feeds.downloader import audio_dest_path
+    dest = audio_dest_path(Path("/lib"), "pod", "Ep", "2026-05-01",
+                           "https://cdn.example.com/stream/12345")
+    assert dest.suffix == ".mp3"
+
+
+def test_audio_dest_path_dotted_path_no_real_extension_falls_back():
+    from pathlib import Path
+    from feeds.downloader import audio_dest_path
+    # last segment has a dot but the "extension" is too long to be real
+    dest = audio_dest_path(Path("/lib"), "pod", "Ep", "2026-05-01",
+                           "https://example.com/audio.somelongtoken")
+    assert dest.suffix == ".mp3"

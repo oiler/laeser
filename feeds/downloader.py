@@ -2,8 +2,11 @@ import logging
 import time
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 import requests
+
+from naming import entry_base
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +67,23 @@ def download_file(
         if existing_size == 0 and dest_path.exists():
             dest_path.unlink()
         return False
+
+
+def audio_dest_path(
+    library: Path,
+    folder_name: str,
+    title: str,
+    pub_date: Optional[str],
+    url: str,
+) -> Path:
+    """Build the on-disk destination for an entry's audio file.
+
+    The extension is taken from the URL's last path segment only when it is a
+    short alphanumeric token; otherwise it falls back to 'mp3'. This avoids the
+    garbage extensions produced by extensionless URLs.
+    """
+    last_segment = urlparse(url).path.rsplit("/", 1)[-1]
+    ext = last_segment.rsplit(".", 1)[-1] if "." in last_segment else ""
+    if not (ext and len(ext) <= 5 and ext.isalnum()):
+        ext = "mp3"
+    return library / folder_name / f"{entry_base(title, pub_date)}.{ext}"

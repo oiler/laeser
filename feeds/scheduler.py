@@ -8,9 +8,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from db.entries import create_entry, update_entry_audio_path, update_entry_fetch_status
-from naming import entry_base
 from db.sources import list_sources, update_source_fetch_status
-from feeds.downloader import download_file
+from feeds.downloader import audio_dest_path, download_file
 from feeds.fetcher import fetch_and_parse_feed
 
 logger = logging.getLogger(__name__)
@@ -51,10 +50,7 @@ def refresh_source(source_id: int, source: dict) -> None:
 def _download_audio(entry: dict, url: str, folder_name: str) -> None:
     """Download audio for an entry if not already present."""
     library = Path(os.environ.get("LAESER_LIBRARY_PATH", "library"))
-    ext = url.split(".")[-1].split("?")[0] or "mp3"
-    base = entry_base(entry["title"], entry.get("pub_date"))
-    filename = f"{base}.{ext}"
-    dest = library / folder_name / filename
+    dest = audio_dest_path(library, folder_name, entry["title"], entry.get("pub_date"), url)
 
     if dest.exists():
         return  # already downloaded
