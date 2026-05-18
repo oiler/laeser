@@ -123,3 +123,13 @@ def test_saved_entry_row_has_saved_class(client, entry):
     client.post(f"/entries/{entry['id']}/save")
     resp = client.get("/entries")
     assert "entry-row unread saved" in resp.text  # row now carries the saved class
+
+
+def test_save_bulk_preserves_source_id(client, source):
+    from db.entries import create_entry
+    e1 = create_entry(source_id=source["id"], title="Filtered",
+                      url="https://example.com/f", description="F")
+    resp = client.post("/entries/save-bulk",
+                       data={"entry_ids": [e1["id"]], "source_id": source["id"], "sort": "desc"})
+    assert resp.status_code == 200
+    assert "Filtered" in resp.text

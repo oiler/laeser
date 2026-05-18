@@ -76,6 +76,7 @@
         count.textContent = n + ' selected';
         toolbar.classList.toggle('hidden', n === 0);
         selectAll.checked = n === checkboxes.length;
+        selectAll.indeterminate = n > 0 && n < checkboxes.length;
     }
 
     checkboxes.forEach((cb, i) => {
