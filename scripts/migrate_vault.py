@@ -95,7 +95,8 @@ def _migrate_one(row: dict, library: Path, dry_run: bool) -> None:
         return
 
     written = write_entry_file(entry_dict)
-    save_entry(row["id"], file_path=str(written))
+    if str(written) != (row.get("file_path") or ""):
+        save_entry(row["id"], file_path=str(written))
     logger.info(f"wrote: {new_md_rel}")
 
     if old_md_abs and old_md_abs.exists() and old_md_abs != written:

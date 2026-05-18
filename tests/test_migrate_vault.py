@@ -74,15 +74,22 @@ def test_migrate_is_idempotent(tmp_path):
     _make_saved_entry_with_old_format(library)
 
     migrate(dry_run=False)
-
     new_md = library / "my-show" / "2024-04-02-the-xz-backdoor.md"
     first_content = new_md.read_text(encoding="utf-8")
+
+    with get_db() as conn:
+        before = dict(conn.execute(
+            "SELECT audio_path, file_path FROM entries WHERE is_saved = 1 LIMIT 1"
+        ).fetchone())
 
     migrate(dry_run=False)
 
     assert new_md.read_text(encoding="utf-8") == first_content
-    # Second run may rewrite identical content; what matters is no DB churn and stable filename
-    assert new_md.exists()
+    with get_db() as conn:
+        after = dict(conn.execute(
+            "SELECT audio_path, file_path FROM entries WHERE is_saved = 1 LIMIT 1"
+        ).fetchone())
+    assert before == after
 
 
 def test_migrate_dry_run_changes_nothing(tmp_path):
