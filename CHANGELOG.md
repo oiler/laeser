@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.0.0 — First Stable Release (2026-05-19)
+
+First stable release. Adds Obsidian vault compatibility, bulk episode selection,
+and bulk audio downloading on top of the v0.1 reader.
+
+### Added
+
+**Obsidian vault compatibility**
+- Saved entries are written as Markdown notes with an audio player embedded at the top
+- Audio files and their Markdown notes share a `YYYY-MM-DD-slug` basename so Obsidian `![[ ]]` embeds resolve
+- One-shot vault migration script (`scripts/migrate_vault.py`) to upgrade pre-existing saved entries
+
+**Bulk episode selection**
+- Checkbox column in the entry list with select-all, Shift+click range selection, and a live selection count
+- Bulk-action toolbar with "Save selected" — saves many episodes to the vault in one action
+- Saved episodes are visually tinted in the list
+
+**Bulk audio download**
+- "Download audio" toolbar action — downloads audio for the selected episodes
+- A single sequential background worker drains a download queue: polite to hosts, never floods the machine; interrupted batches resume on restart
+- Per-row audio status icons (queued / downloading / downloaded / failed)
+- One-shot enclosure-URL backfill script (`scripts/backfill_enclosure_urls.py`) for episodes downloaded before URLs were stored
+
+### Changed
+- Entry HTML descriptions are converted to Markdown when saved to the vault
+- Downloaded audio filenames use the shared `YYYY-MM-DD-slug` basename
+
+### Fixed
+- Entries are deduplicated by `guid`, handling feeds with rotating access-token URLs
+- Audio URLs with no file extension no longer produce malformed filenames
+
 ## v0.1 — Initial Release (2026-03-17)
 
 Built from the implementation plan in `docs/superpowers/plans/2026-03-16-laeser-implementation.md`.
