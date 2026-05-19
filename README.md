@@ -31,3 +31,42 @@ The `scripts/` directory holds one-shot maintenance tools:
 
 - `migrate_vault.py` — upgrades saved entries created before vault compatibility
 - `backfill_enclosure_urls.py` — stores audio URLs for episodes downloaded before URLs were tracked
+
+## Running as a service
+
+Laeser can run as an always-on local service supervised by macOS `launchd`,
+reachable at `http://app.laeser.org:8473`. It survives closing the terminal
+and restarts automatically if it crashes.
+
+### One-time setup
+
+1. Map the hostname to loopback (needs `sudo`):
+
+   ```sh
+   echo '127.0.0.1 app.laeser.org' | sudo tee -a /etc/hosts
+   ```
+
+2. Install the LaunchAgent:
+
+   ```sh
+   deploy/install.sh
+   ```
+
+### Managing the service
+
+```sh
+deploy/laeserctl start     # start it (survives terminal close)
+deploy/laeserctl stop      # stop it cleanly (stays stopped)
+deploy/laeserctl restart   # restart
+deploy/laeserctl status    # show launchd state
+deploy/laeserctl logs      # tail the log
+```
+
+Then open http://app.laeser.org:8473 in your browser.
+
+The service does not come back automatically after a reboot — start it again
+with `deploy/laeserctl start`.
+
+**Do not run the dev instance (`uvicorn --reload`) and the service at the same
+time** — both open the same `laeser.db` and `library/`, and would run two
+schedulers and two download workers against shared state. Run one or the other.
