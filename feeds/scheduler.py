@@ -7,7 +7,7 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db.entries import create_entry, update_entry_audio_path, update_entry_fetch_status
+from db.entries import create_entry, set_audio_status, update_entry_audio_path, update_entry_fetch_status
 from db.sources import list_sources, update_source_fetch_status
 from feeds.downloader import audio_dest_path, download_file
 from feeds.fetcher import fetch_and_parse_feed
@@ -59,6 +59,7 @@ def _download_audio(entry: dict, url: str, folder_name: str) -> None:
     if success:
         audio_path = str(dest.relative_to(library))
         update_entry_audio_path(entry["id"], audio_path)
+        set_audio_status(entry["id"], "downloaded")
         logger.info(f"Audio saved: {audio_path}")
 
 

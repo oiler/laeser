@@ -86,8 +86,12 @@ def start_worker() -> None:
 def stop_worker() -> None:
     """Signal the worker to exit and wait briefly for it."""
     global _worker
-    if _worker:
+    if _worker and _worker.is_alive():
+        _queue.put(None)
+        _worker.join(timeout=5)
         if _worker.is_alive():
-            _queue.put(None)
-            _worker.join(timeout=2)
-        _worker = None
+            # Still draining a download — leave the reference so a later
+            # start_worker() sees it alive and does not spawn a duplicate.
+            logger.warning("Download worker did not stop within timeout")
+            return
+    _worker = None
