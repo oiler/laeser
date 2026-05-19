@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>org.laeser.app</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>__UV_PATH__</string>
+		<string>run</string>
+		<string>uvicorn</string>
+		<string>main:app</string>
+		<string>--host</string>
+		<string>127.0.0.1</string>
+		<string>--port</string>
+		<string>8473</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>__PROJECT_DIR__</string>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>__LOG_DIR__/laeser.log</string>
+	<key>StandardErrorPath</key>
+	<string>__LOG_DIR__/laeser.log</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>__SERVICE_PATH__</string>
+	</dict>
+</dict>
+</plist>
