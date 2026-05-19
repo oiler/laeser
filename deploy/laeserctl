@@ -1,28 +1,59 @@
 #!/usr/bin/env bash
 # Manage the Laeser launchd service.
+#
+# Control is by load state, not signal: start = bootstrap the plist (KeepAlive
+# auto-starts and restarts on crash); stop = bootout (KeepAlive no longer
+# applies, so it stays down).
 set -euo pipefail
 
 LABEL="org.laeser.app"
 TARGET="gui/$(id -u)/${LABEL}"
+PLIST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/${LABEL}.plist"
 LOG="${HOME}/Library/Logs/laeser/laeser.log"
+
+is_loaded() {
+	launchctl print "$TARGET" >/dev/null 2>&1
+}
+
+require_plist() {
+	if [[ ! -f "$PLIST" ]]; then
+		echo "Error: $PLIST not found. Run deploy/install.sh first." >&2
+		exit 1
+	fi
+}
 
 case "${1:-}" in
 	start)
-		launchctl kickstart "$TARGET"
-		echo "Started ${LABEL}"
+		if is_loaded; then
+			echo "${LABEL} is already running"
+		else
+			require_plist
+			launchctl bootstrap "gui/$(id -u)" "$PLIST"
+			echo "Started ${LABEL}"
+		fi
 		;;
 	stop)
-		launchctl kill SIGTERM "$TARGET"
-		echo "Stopped ${LABEL}"
+		if is_loaded; then
+			launchctl bootout "$TARGET"
+			echo "Stopped ${LABEL}"
+		else
+			echo "${LABEL} is not running"
+		fi
 		;;
 	restart)
-		launchctl kill SIGTERM "$TARGET" 2>/dev/null || true
+		require_plist
+		launchctl bootout "$TARGET" 2>/dev/null || true
 		sleep 1
-		launchctl kickstart "$TARGET"
+		launchctl bootstrap "gui/$(id -u)" "$PLIST"
 		echo "Restarted ${LABEL}"
 		;;
 	status)
-		launchctl print "$TARGET"
+		if is_loaded; then
+			launchctl print "$TARGET"
+		else
+			echo "${LABEL} is not loaded (run 'laeserctl start')"
+			exit 1
+		fi
 		;;
 	logs)
 		tail -f "$LOG"

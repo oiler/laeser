@@ -17,13 +17,8 @@
 	</array>
 	<key>WorkingDirectory</key>
 	<string>__PROJECT_DIR__</string>
-	<key>RunAtLoad</key>
-	<false/>
 	<key>KeepAlive</key>
-	<dict>
-		<key>SuccessfulExit</key>
-		<false/>
-	</dict>
+	<true/>
 	<key>StandardOutPath</key>
 	<string>__LOG_DIR__/laeser.log</string>
 	<key>StandardErrorPath</key>

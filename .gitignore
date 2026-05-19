@@ -10,3 +10,4 @@ library/
 .env
 .env.*
 example-files/
+deploy/org.laeser.app.plist

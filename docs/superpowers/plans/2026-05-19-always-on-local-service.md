@@ -358,3 +358,32 @@ Expected: recent uvicorn startup lines.
 Summarize each verification step's outcome. The implementation is complete when
 steps 1–8 pass. Leave the service running (or stop it) per the user's preference.
 ```
+
+---
+
+## Postmortem (2026-05-19)
+
+Task 5 step 7 failed in execution — `laeserctl stop` did not stay stopped. Root
+cause: the plan's `KeepAlive = { SuccessfulExit = false }` design assumed
+uvicorn exits 0 on a graceful SIGTERM. Empirical testing showed it exits **143**
+(= 128 + 15) regardless of how cleanly it shut down. That is indistinguishable
+from a crash, so launchd always restarts. The defect is exit-code-based: no
+condition on `KeepAlive` can tell stop from crash for this app.
+
+**Corrected design** (now reflected in the spec, the three `deploy/` files, and
+`.gitignore` — superseding what Tasks 1–3 originally specified):
+
+- Plist uses `KeepAlive = true` and **no** `RunAtLoad` key.
+- `install.sh` renders the plist into **`deploy/org.laeser.app.plist`** (in the
+  repo, gitignored), not `~/Library/LaunchAgents/`. It no longer bootstraps the
+  agent; that is `laeserctl start`'s job. It does clean up any legacy plist
+  left in `~/Library/LaunchAgents/` from this earlier mistake.
+- `laeserctl` controls the service by **load state**, not signals:
+  `start` → `bootstrap`; `stop` → `bootout`; `restart` → `bootout` then
+  `bootstrap`. No more `kickstart`/`kill SIGTERM`.
+- Keeping the plist out of `~/Library/LaunchAgents/` is what gives us "no
+  reboot revival" — only that directory is auto-bootstrapped at login.
+
+The corrected design was verified end-to-end before the task was marked done.
+The fix lives in commit history (search `fix: switch launchd control to load
+state`) and the spec doc has been updated.

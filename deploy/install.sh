@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Idempotent one-time setup for the Laeser launchd service.
+#
+# Renders the plist into deploy/ (gitignored, kept out of ~/Library/LaunchAgents
+# so it does not auto-load at login). Use deploy/laeserctl start to run it.
 set -euo pipefail
 
 LABEL="org.laeser.app"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEMPLATE="${PROJECT_DIR}/deploy/org.laeser.app.plist.template"
-PLIST_DIR="${HOME}/Library/LaunchAgents"
-PLIST="${PLIST_DIR}/${LABEL}.plist"
+TEMPLATE="${PROJECT_DIR}/deploy/${LABEL}.plist.template"
+PLIST="${PROJECT_DIR}/deploy/${LABEL}.plist"
 LOG_DIR="${HOME}/Library/Logs/laeser"
+LEGACY_PLIST="${HOME}/Library/LaunchAgents/${LABEL}.plist"
 TARGET="gui/$(id -u)/${LABEL}"
 
 # 1. Locate uv.
@@ -28,19 +31,22 @@ fi
 # 3. Create the log directory.
 mkdir -p "$LOG_DIR"
 
-# 4. Render the plist template into ~/Library/LaunchAgents.
-mkdir -p "$PLIST_DIR"
+# 4. Migrate away from any earlier install that placed the plist in
+#    ~/Library/LaunchAgents — it would auto-load at login (and with
+#    KeepAlive=true, auto-start), which violates the manual-start design.
+if [[ -f "$LEGACY_PLIST" ]]; then
+	launchctl bootout "$TARGET" 2>/dev/null || true
+	rm -f "$LEGACY_PLIST"
+	echo "Removed legacy plist at $LEGACY_PLIST"
+fi
+
+# 5. Render the plist template into the repo's deploy/ directory.
 sed -e "s|__UV_PATH__|${UV_PATH}|g" \
     -e "s|__PROJECT_DIR__|${PROJECT_DIR}|g" \
     -e "s|__LOG_DIR__|${LOG_DIR}|g" \
     -e "s|__SERVICE_PATH__|${SERVICE_PATH}|g" \
     "$TEMPLATE" > "$PLIST"
 echo "Wrote ${PLIST}"
-
-# 5. (Re-)bootstrap the LaunchAgent so launchd picks up the current plist.
-launchctl bootout "$TARGET" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$PLIST"
-echo "Bootstrapped ${LABEL} (loaded, not started)"
 
 echo
 echo "Setup complete. Start the service with:"
