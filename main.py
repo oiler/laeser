@@ -27,6 +27,7 @@ app = FastAPI(title="Laeser", lifespan=lifespan)
 
 Path("static").mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
 app.include_router(sources_router)
 app.include_router(entries_router)
