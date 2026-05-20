@@ -1,6 +1,6 @@
 [project]
 name = "laeser"
-version = "1.0.0"
+version = "1.1.0"
 description = "A hybrid RSS and podcast reader with local archival"
 requires-python = ">=3.11"
 dependencies = [

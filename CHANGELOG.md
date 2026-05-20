@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.1.0 — Local Service (2026-05-20)
+
+Adds a way to run Laeser as a persistent always-on service on your Mac, plus README polish and a proper favicon.
+
+### Added
+
+**Always-on local service**
+- macOS launchd LaunchAgent supervises a no-reload `uvicorn` process on `127.0.0.1:8473`, reachable at `http://app.laeser.org:8473` after a one-line `/etc/hosts` entry
+- `deploy/install.sh` — idempotent setup that locates `uv`, advises on the hosts entry, renders the plist into the repo, and migrates away from any earlier broken install
+- `deploy/laeserctl` — `start` / `stop` / `restart` / `status` / `logs` wrapper around `launchctl`, controlling the service by load state rather than signals so a clean stop actually stays stopped
+- Survives closing the terminal; restarts automatically on crash; does not auto-start on reboot
+
+**Polish**
+- `## Example` section in the README with a screenshot of the reader
+- Favicon (`favicon.ico`), modern SVG favicon, and Apple touch icon — served from a new `/assets` mount and wired into the base layout
+- `## Running as a service` section in the README, including how to change the service port
+
 ## v1.0.0 — First Stable Release (2026-05-19)
 
 First stable release. Adds Obsidian vault compatibility, bulk episode selection,
