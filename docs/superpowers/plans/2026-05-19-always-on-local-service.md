@@ -74,9 +74,7 @@ Create `deploy/org.laeser.app.plist.template` with exactly this content:
 </plist>
 ```
 
-The four `__TOKEN__` values are substituted by `install.sh` in Task 3:
-`__UV_PATH__` (absolute path to `uv`), `__PROJECT_DIR__` (repo root),
-`__LOG_DIR__` (`~/Library/Logs/laeser`), `__SERVICE_PATH__` (a `PATH` value).
+The four `__TOKEN__` values are substituted by `install.sh` in Task 3: `__UV_PATH__` (absolute path to `uv`), `__PROJECT_DIR__` (repo root), `__LOG_DIR__` (`~/Library/Logs/laeser`), `__SERVICE_PATH__` (a `PATH` value).
 
 - [ ] **Step 2: Verify the template is well-formed XML**
 
@@ -140,9 +138,7 @@ case "${1:-}" in
 esac
 ```
 
-`restart` tolerates an already-stopped service (`|| true`); after a clean
-SIGTERM the agent's `KeepAlive = { SuccessfulExit = false }` will *not*
-auto-restart it, so `restart` issues an explicit `kickstart`.
+`restart` tolerates an already-stopped service (`|| true`); after a clean SIGTERM the agent's `KeepAlive = { SuccessfulExit = false }` will *not* auto-restart it, so `restart` issues an explicit `kickstart`.
 
 - [ ] **Step 2: Make it executable**
 
@@ -151,8 +147,7 @@ Run: `chmod +x deploy/laeserctl`
 - [ ] **Step 3: Verify shell syntax**
 
 Run: `bash -n deploy/laeserctl && deploy/laeserctl 2>&1; echo "exit=$?"`
-Expected: prints `Usage: laeserctl {start|stop|restart|status|logs}` and `exit=1`
-(no args → usage message, non-zero exit; `bash -n` reports no syntax errors).
+Expected: prints `Usage: laeserctl {start|stop|restart|status|logs}` and `exit=1` (no args → usage message, non-zero exit; `bash -n` reports no syntax errors).
 
 - [ ] **Step 4: Commit**
 
@@ -229,8 +224,7 @@ Run: `chmod +x deploy/install.sh`
 - [ ] **Step 3: Verify shell syntax**
 
 Run: `bash -n deploy/install.sh; echo "exit=$?"`
-Expected: `exit=0` (no syntax errors). Do **not** execute it yet — full
-execution happens in Task 5.
+Expected: `exit=0` (no syntax errors). Do **not** execute it yet — full execution happens in Task 5.
 
 - [ ] **Step 4: Commit**
 
@@ -253,9 +247,7 @@ After the existing "Running locally" section, add this content:
 ```markdown
 ## Running as a service
 
-Laeser can run as an always-on local service supervised by macOS `launchd`,
-reachable at `http://app.laeser.org:8473`. It survives closing the terminal
-and restarts automatically if it crashes.
+Laeser can run as an always-on local service supervised by macOS `launchd`, reachable at `http://app.laeser.org:8473`. It survives closing the terminal and restarts automatically if it crashes.
 
 ### One-time setup
 
@@ -283,12 +275,9 @@ deploy/laeserctl logs      # tail the log
 
 Then open http://app.laeser.org:8473 in your browser.
 
-The service does not come back automatically after a reboot — start it again
-with `deploy/laeserctl start`.
+The service does not come back automatically after a reboot — start it again with `deploy/laeserctl start`.
 
-**Do not run the dev instance (`uvicorn --reload`) and the service at the same
-time** — both open the same `laeser.db` and `library/`, and would run two
-schedulers and two download workers against shared state. Run one or the other.
+**Do not run the dev instance (`uvicorn --reload`) and the service at the same time** — both open the same `laeser.db` and `library/`, and would run two schedulers and two download workers against shared state. Run one or the other.
 ```
 
 - [ ] **Step 2: Verify the README renders the new section**
@@ -307,8 +296,7 @@ git commit -m "docs: document running Laeser as a launchd service"
 
 ### Task 5: Install and verify end-to-end
 
-This task runs the real setup and the spec's verification checklist. No commit
-unless a fix is needed.
+This task runs the real setup and the spec's verification checklist. No commit unless a fix is needed.
 
 - [ ] **Step 1: Confirm the hosts entry exists**
 
@@ -355,35 +343,20 @@ Expected: recent uvicorn startup lines.
 
 - [ ] **Step 9: Report results**
 
-Summarize each verification step's outcome. The implementation is complete when
-steps 1–8 pass. Leave the service running (or stop it) per the user's preference.
+Summarize each verification step's outcome. The implementation is complete when steps 1–8 pass. Leave the service running (or stop it) per the user's preference.
 ```
 
 ---
 
 ## Postmortem (2026-05-19)
 
-Task 5 step 7 failed in execution — `laeserctl stop` did not stay stopped. Root
-cause: the plan's `KeepAlive = { SuccessfulExit = false }` design assumed
-uvicorn exits 0 on a graceful SIGTERM. Empirical testing showed it exits **143**
-(= 128 + 15) regardless of how cleanly it shut down. That is indistinguishable
-from a crash, so launchd always restarts. The defect is exit-code-based: no
-condition on `KeepAlive` can tell stop from crash for this app.
+Task 5 step 7 failed in execution — `laeserctl stop` did not stay stopped. Root cause: the plan's `KeepAlive = { SuccessfulExit = false }` design assumed uvicorn exits 0 on a graceful SIGTERM. Empirical testing showed it exits **143** (= 128 + 15) regardless of how cleanly it shut down. That is indistinguishable from a crash, so launchd always restarts. The defect is exit-code-based: no condition on `KeepAlive` can tell stop from crash for this app.
 
-**Corrected design** (now reflected in the spec, the three `deploy/` files, and
-`.gitignore` — superseding what Tasks 1–3 originally specified):
+**Corrected design** (now reflected in the spec, the three `deploy/` files, and `.gitignore` — superseding what Tasks 1–3 originally specified):
 
 - Plist uses `KeepAlive = true` and **no** `RunAtLoad` key.
-- `install.sh` renders the plist into **`deploy/org.laeser.app.plist`** (in the
-  repo, gitignored), not `~/Library/LaunchAgents/`. It no longer bootstraps the
-  agent; that is `laeserctl start`'s job. It does clean up any legacy plist
-  left in `~/Library/LaunchAgents/` from this earlier mistake.
-- `laeserctl` controls the service by **load state**, not signals:
-  `start` → `bootstrap`; `stop` → `bootout`; `restart` → `bootout` then
-  `bootstrap`. No more `kickstart`/`kill SIGTERM`.
-- Keeping the plist out of `~/Library/LaunchAgents/` is what gives us "no
-  reboot revival" — only that directory is auto-bootstrapped at login.
+- `install.sh` renders the plist into **`deploy/org.laeser.app.plist`** (in the repo, gitignored), not `~/Library/LaunchAgents/`. It no longer bootstraps the agent; that is `laeserctl start`'s job. It does clean up any legacy plist left in `~/Library/LaunchAgents/` from this earlier mistake.
+- `laeserctl` controls the service by **load state**, not signals: `start` → `bootstrap`; `stop` → `bootout`; `restart` → `bootout` then `bootstrap`. No more `kickstart`/`kill SIGTERM`.
+- Keeping the plist out of `~/Library/LaunchAgents/` is what gives us "no reboot revival" — only that directory is auto-bootstrapped at login.
 
-The corrected design was verified end-to-end before the task was marked done.
-The fix lives in commit history (search `fix: switch launchd control to load
-state`) and the spec doc has been updated.
+The corrected design was verified end-to-end before the task was marked done. The fix lives in commit history (search `fix: switch launchd control to load state`) and the spec doc has been updated.

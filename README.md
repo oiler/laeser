@@ -1,6 +1,6 @@
 # Laeser
 
-Laeser is the software behind [laeser.org](https://laeser.org): a self-hosted service that lets you run your own RSS and podcast reader. It archives what you read as you go — MP3 files saved to disk, articles saved as Markdown. Your library is yours, and it outlives the feeds it came from.
+[laeser.org](https://laeser.org): a self-hosted service that lets you run your own RSS and podcast reader. It archives what you read as you go — MP3 files saved to disk, articles saved as Markdown. Your library is yours, and it outlives the feeds it came from.
 
 ## Features
 
@@ -10,6 +10,10 @@ Laeser is the software behind [laeser.org](https://laeser.org): a self-hosted se
 - Bulk episode selection with select-all and Shift+click ranges, plus bulk save and bulk audio download
 - Polls feeds every 6 hours in the background
 - A single sequential worker drains the audio download queue: polite to hosts, and interrupted batches resume on restart
+
+## Example
+
+![Laeser reader interface — sources sidebar on the left, episode list in the middle, open entry with audio player on the right](screenshot.png)
 
 ## Install & run
 
@@ -34,9 +38,7 @@ The `scripts/` directory holds one-shot maintenance tools:
 
 ## Running as a service
 
-Laeser can run as an always-on local service supervised by macOS `launchd`,
-reachable at `http://app.laeser.org:8473`. It survives closing the terminal
-and restarts automatically if it crashes.
+Laeser can run as an always-on local service supervised by macOS `launchd`, reachable at `http://app.laeser.org:8473`. It survives closing the terminal and restarts automatically if it crashes.
 
 ### One-time setup
 
@@ -64,9 +66,24 @@ deploy/laeserctl logs      # tail the log
 
 Then open http://app.laeser.org:8473 in your browser.
 
-The service does not come back automatically after a reboot — start it again
-with `deploy/laeserctl start`.
+### Changing the port
 
-**Do not run the dev instance (`uvicorn --reload`) and the service at the same
-time** — both open the same `laeser.db` and `library/`, and would run two
-schedulers and two download workers against shared state. Run one or the other.
+The port lives in one place — `deploy/org.laeser.app.plist.template`:
+
+```xml
+<string>--port</string>
+<string>8473</string>
+```
+
+Replace `8473` with the new value, then re-render the plist and restart the service:
+
+```sh
+deploy/install.sh
+deploy/laeserctl restart
+```
+
+Pick something outside the common dev range (3000/5000/8000/8080/8888) and not already listening — `lsof -nP -iTCP -sTCP:LISTEN` shows what's in use. Update your bookmark to match.
+
+The service does not come back automatically after a reboot — start it again with `deploy/laeserctl start`.
+
+**Do not run the dev instance (`uvicorn --reload`) and the service at the same time** — both open the same `laeser.db` and `library/`, and would run two schedulers and two download workers against shared state. Run one or the other.
