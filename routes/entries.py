@@ -34,7 +34,9 @@ def entry_list(
 ):
     entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
-        request, "_entry_list.html", {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort}
+        request, "_entry_list.html",
+        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort,
+         "selected_ids": set()},
     )
 
 
@@ -51,7 +53,8 @@ def save_bulk(
     entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
         request, "_entry_list.html",
-        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort},
+        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort,
+         "selected_ids": set(entry_ids)},
     )
 
 
@@ -75,7 +78,8 @@ def download_bulk(
     entries = list_entries(source_id=source_id, saved_only=saved, sort=sort)
     return templates.TemplateResponse(
         request, "_entry_list.html",
-        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort},
+        {"entries": entries, "source_id": source_id, "saved": saved, "sort": sort,
+         "selected_ids": set(entry_ids)},
     )
 
 

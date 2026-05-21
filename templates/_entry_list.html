@@ -54,7 +54,8 @@
         hx-push-url="false">
         <td class="col-select" onclick="event.stopPropagation()">
             <input type="checkbox" class="entry-checkbox" name="entry_ids"
-                   value="{{ entry.id }}" data-index="{{ loop.index0 }}">
+                   value="{{ entry.id }}" data-index="{{ loop.index0 }}"
+                   {% if entry.id in selected_ids %}checked{% endif %}>
         </td>
         <td class="col-save" onclick="event.stopPropagation()">{% include "_save_button.html" %}</td>
         <td class="col-title">

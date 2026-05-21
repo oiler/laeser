@@ -182,3 +182,55 @@ def test_entry_list_shows_download_status_icons(client, source):
     set_audio_status(e["id"], "queued")
     resp = client.get("/entries")
     assert "Audio download queued" in resp.text
+
+
+import re
+
+
+def _checkbox_is_checked(html: str, entry_id: int) -> bool:
+    """True iff the <input> for this entry id includes the `checked` attribute."""
+    pattern = re.compile(
+        r'<input[^>]*\bvalue="' + str(entry_id) + r'"[^>]*>',
+        re.IGNORECASE,
+    )
+    match = pattern.search(html)
+    if not match:
+        return False
+    return "checked" in match.group(0)
+
+
+def test_entry_list_get_renders_checkboxes_unchecked(client, source):
+    from db.entries import create_entry
+    e1 = create_entry(source_id=source["id"], title="Plain A",
+                      url="https://example.com/plain-a", description="A")
+    resp = client.get("/entries")
+    assert resp.status_code == 200
+    assert not _checkbox_is_checked(resp.text, e1["id"])
+
+
+def test_save_bulk_preserves_selection_in_response(client, source):
+    from db.entries import create_entry
+    e1 = create_entry(source_id=source["id"], title="Sel A",
+                      url="https://example.com/sel-a", description="A")
+    e2 = create_entry(source_id=source["id"], title="Sel B",
+                      url="https://example.com/sel-b", description="B")
+    resp = client.post("/entries/save-bulk",
+                       data={"entry_ids": [e1["id"], e2["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert _checkbox_is_checked(resp.text, e1["id"])
+    assert _checkbox_is_checked(resp.text, e2["id"])
+
+
+def test_download_bulk_preserves_selection_in_response(client, source):
+    from db.entries import create_entry
+    e1 = create_entry(source_id=source["id"], title="Pod A",
+                      url="https://example.com/pod-a", description="A",
+                      enclosure_url="https://example.com/a.mp3")
+    e2 = create_entry(source_id=source["id"], title="Pod B",
+                      url="https://example.com/pod-b", description="B",
+                      enclosure_url="https://example.com/b.mp3")
+    resp = client.post("/entries/download-bulk",
+                       data={"entry_ids": [e1["id"], e2["id"]], "sort": "desc"})
+    assert resp.status_code == 200
+    assert _checkbox_is_checked(resp.text, e1["id"])
+    assert _checkbox_is_checked(resp.text, e2["id"])
