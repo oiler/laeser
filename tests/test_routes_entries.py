@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from db.sources import create_source
 from db.entries import create_entry
@@ -184,11 +186,7 @@ def test_entry_list_shows_download_status_icons(client, source):
     assert "Audio download queued" in resp.text
 
 
-import re
-
-
 def _checkbox_is_checked(html: str, entry_id: int) -> bool:
-    """True iff the <input> for this entry id includes the `checked` attribute."""
     pattern = re.compile(
         r'<input[^>]*\bvalue="' + str(entry_id) + r'"[^>]*>',
         re.IGNORECASE,
