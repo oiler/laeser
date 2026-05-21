@@ -43,7 +43,7 @@ main { border-right: 1px solid #ddd; overflow-y: auto; background: white; }
 .entry-row.saved:hover { background: #fdf0d4; }
 
 /* Bulk-action toolbar */
-.bulk-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid #eee; background: #f0f4ff; position: sticky; top: 0; z-index: 9; }
+.bulk-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid #eee; background: #f0f4ff; position: sticky; top: 50px; z-index: 9; }
 .bulk-toolbar.hidden { display: none; }
 .bulk-toolbar #bulk-count { font-size: 12px; color: #555; font-weight: 600; }
 .bulk-save-btn { padding: 4px 12px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
